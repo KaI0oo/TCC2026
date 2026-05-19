@@ -9,7 +9,7 @@ from sklearn.calibration import CalibratedClassifierCV
 # ============================================================
 # VARIÁVEIS GLOBAIS
 # ============================================================
-
+# caso precise de senha do banco de dados = 1234
 host = "localhost"
 user = "root"
 password = ""
