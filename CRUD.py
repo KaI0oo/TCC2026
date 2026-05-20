@@ -1,7 +1,6 @@
 import pandas as pd
 import mysql.connector
-import re
-
+from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.calibration import CalibratedClassifierCV
@@ -9,679 +8,388 @@ from sklearn.calibration import CalibratedClassifierCV
 # ============================================================
 # VARIÁVEIS GLOBAIS
 # ============================================================
-# caso precise de senha do banco de dados = 1234
 host = "localhost"
 user = "root"
 password = ""
 database = "banco_de_dados_prostata"
-
 medico_logado = None
 
-emails_validos = [
-
-    "@gmail.com",
-    "@hotmail.com",
-    "@outlook.com",
-    "@yahoo.com"
-
-]
+emails_validos = ["@gmail.com", "@hotmail.com", "@outlook.com", "@yahoo.com"]
 
 # ============================================================
 # CONEXÃO MYSQL
 # ============================================================
-
 conexao = mysql.connector.connect(
-
-    host=host,
-    user=user,
-    password=password,
-    database=database
-
+    host=host, user=user, password=password, database=database
 )
-
 cursor = conexao.cursor()
-
 print("\nBanco conectado com sucesso!\n")
 
 # ============================================================
-# IA
+# IA - TREINAMENTO
 # ============================================================
-
 df = pd.read_csv("dados_psa_clinica.csv")
-
 X = df.drop('Resultado', axis=1)
-
 y = df['Resultado']
 
-X_train, X_test, y_train, y_test = train_test_split(
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-    X,
-    y,
-    test_size=0.3,
-    random_state=42
-
-)
-
-clf = DecisionTreeClassifier(
-
-    max_depth=3,
-    criterion='entropy',
-    random_state=42
-
-)
-
+clf = DecisionTreeClassifier(max_depth=3, criterion='entropy', random_state=42)
 clf.fit(X_train, y_train)
-
-clf_calibrated = CalibratedClassifierCV(
-
-    clf,
-    cv=5,
-    method='sigmoid'
-
-)
-
+clf_calibrated = CalibratedClassifierCV(clf, cv=5, method='sigmoid')
 clf_calibrated.fit(X_train, y_train)
 
 # ============================================================
-# VALIDAÇÕES
+# FUNÇÕES AUXILIARES
 # ============================================================
-
 def validar_cpf(cpf):
-
     cpf = ''.join(filter(str.isdigit, cpf))
+    return len(cpf) == 11
 
-    if len(cpf) != 11:
+def validar_tipo_sanguineo(tipo):
+    tipos_validos = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+    return tipo.upper() in tipos_validos
 
-        return False
+def calcular_idade(data_nascimento):
+    try:
+        nasc = datetime.strptime(data_nascimento, "%d-%m-%Y")
+        hoje = datetime.today()
+        idade = hoje.year - nasc.year - ((hoje.month, hoje.day) < (nasc.month, nasc.day))
+        return idade
+    except:
+        return None
 
-    return True
-
-# ============================================================
-
-def validar_telefone(telefone):
-
-    telefone = ''.join(filter(str.isdigit, telefone))
-
-    if len(telefone) < 10 or len(telefone) > 11:
-
-        return False
-
-    return True
-
-# ============================================================
-
-def validar_email(email):
-
-    return any(email.endswith(x) for x in emails_validos)
-
-# ============================================================
+def formatar_telefone(telefone):
+    digitos = ''.join(filter(str.isdigit, telefone))
+    if len(digitos) in [10, 11]:
+        return f"+55{digitos}"
+    return None
 
 def formatar_nome(nome):
-
     return nome.strip().title()
 
-# ============================================================
-
 def formatar_doencas(doencas):
-
-    lista = doencas.split(",")
-
-    lista_formatada = []
-
-    for doenca in lista:
-
-        lista_formatada.append(doenca.strip().capitalize())
-
-    return ", ".join(lista_formatada)
+    lista = [doenca.strip().capitalize() for doenca in doencas.split(",")]
+    return ", ".join(lista)
 
 # ============================================================
-# CADASTRAR MÉDICO
+# CADASTRO E LOGIN MÉDICO
 # ============================================================
-
 def cadastrar_medico():
-
     global medico_logado
-
     print("\n========== CADASTRO MÉDICO ==========\n")
+    rm = input("RM: ").strip()
+    if not rm.isdigit():
+        print("RM inválido!"); return
 
-    while True:
+    cursor.execute("SELECT * FROM medicos WHERE rm = %s", (rm,))
+    if cursor.fetchone():
+        print("\nRM já cadastrado!\n"); return
 
-        rm = input("RM: ").strip()
+    nome = formatar_nome(input("Nome: "))
+    especialidade = formatar_nome(input("Especialidade: "))
+    
+    telefone = input("Telefone: ")
+    while not (tel_formatado := formatar_telefone(telefone)):
+        print("Telefone inválido!"); telefone = input("Telefone: ")
 
-        if not rm.isdigit():
+    email = input("Email: ").strip().lower()
+    while not any(email.endswith(x) for x in emails_validos):
+        print("Email inválido!"); email = input("Email: ").strip().lower()
 
-            print("RM inválido!")
+    senha = input("Senha: ").strip()
+    while len(senha) < 4:
+        print("Senha muito curta!"); senha = input("Senha: ").strip()
 
-        else:
-
-            break
-
-    sql = "SELECT * FROM medicos WHERE rm = %s"
-
-    cursor.execute(sql, (rm,))
-
-    resultado = cursor.fetchone()
-
-    if resultado:
-
-        print("\nRM já cadastrado!\n")
-        return
-
-    while True:
-
-        nome = formatar_nome(input("Nome: "))
-
-        if len(nome) < 3:
-
-            print("Nome inválido!")
-
-        else:
-
-            break
-
-    while True:
-
-        especialidade = formatar_nome(input("Especialidade: "))
-
-        if len(especialidade) < 3:
-
-            print("Especialidade inválida!")
-
-        else:
-
-            break
-
-    while True:
-
-        telefone = input("Telefone: ")
-
-        if not validar_telefone(telefone):
-
-            print("Telefone inválido!")
-
-        else:
-
-            telefone = ''.join(filter(str.isdigit, telefone))
-            break
-
-    while True:
-
-        email = input("Email: ").strip().lower()
-
-        if not validar_email(email):
-
-            print("Email inválido!")
-
-        else:
-
-            break
-
-    while True:
-
-        senha = input("Senha: ").strip()
-
-        if len(senha) < 4:
-
-            print("Senha muito curta!")
-
-        else:
-
-            break
-
-    sql = """
-    INSERT INTO medicos (
-
-        rm,
-        nome,
-        especialidade,
-        telefone,
-        email,
-        senha
-
-    )
-
-    VALUES (%s,%s,%s,%s,%s,%s)
-    """
-
-    valores = (
-
-        rm,
-        nome,
-        especialidade,
-        telefone,
-        email,
-        senha
-
-    )
-
-    cursor.execute(sql, valores)
-
+    sql = """INSERT INTO medicos (rm, nome, especialidade, telefone, email, senha)
+             VALUES (%s, %s, %s, %s, %s, %s)"""
+    cursor.execute(sql, (rm, nome, especialidade, tel_formatado, email, senha))
     conexao.commit()
-
     print("\nMédico cadastrado com sucesso!\n")
 
-# ============================================================
-# LOGIN
-# ============================================================
 
 def login_medico():
-
     global medico_logado
-
     print("\n========== LOGIN ==========\n")
-
     rm = input("RM: ")
-
     senha = input("Senha: ")
-
-    sql = """
-    SELECT * FROM medicos
-    WHERE rm = %s AND senha = %s
-    """
-
-    valores = (rm, senha)
-
-    cursor.execute(sql, valores)
-
-    resultado = cursor.fetchone()
-
-    if resultado:
-
+    cursor.execute("SELECT * FROM medicos WHERE rm = %s AND senha = %s", (rm, senha))
+    if cursor.fetchone():
         medico_logado = rm
-
-        print("\nLogin realizado!\n")
-
+        print("\nLogin realizado com sucesso!\n")
     else:
-
         print("\nRM ou senha inválidos!\n")
 
-# ============================================================
-# LOGOUT
-# ============================================================
 
 def logout():
-
     global medico_logado
-
     medico_logado = None
-
     print("\nLogout realizado!\n")
 
 # ============================================================
-# CADASTRAR PACIENTE
+# PACIENTES
 # ============================================================
-
 def cadastrar_paciente():
-
     print("\n========== CADASTRO PACIENTE ==========\n")
+    cpf = input("CPF: ")
+    while not validar_cpf(cpf):
+        print("CPF inválido!"); cpf = input("CPF: ")
 
+    cursor.execute("SELECT * FROM pacientes WHERE cpf = %s", (cpf,))
+    if cursor.fetchone():
+        print("\nCPF já cadastrado!\n"); return
+
+    nome = formatar_nome(input("Nome: "))
     while True:
+        data_nasc = input("Data de Nascimento (DD-MM-AAAA): ").strip()
+        idade = calcular_idade(data_nasc)
+        if idade is not None: break
+        print("Data inválida!")
 
-        cpf = input("CPF: ")
+    sexo = input("Sexo (M/F): ").upper()
+    while sexo not in ["M", "F"]: sexo = input("Sexo (M/F): ").upper()
 
-        if not validar_cpf(cpf):
-
-            print("CPF inválido!")
-
-        else:
-
-            break
-
-    sql = "SELECT * FROM pacientes WHERE cpf = %s"
-
-    cursor.execute(sql, (cpf,))
-
-    resultado = cursor.fetchone()
-
-    if resultado:
-
-        print("\nCPF já cadastrado!\n")
-        return
-
-    while True:
-
-        nome = formatar_nome(input("Nome: "))
-
-        if len(nome) < 3:
-
-            print("Nome inválido!")
-
-        else:
-
-            break
-
-    while True:
-
-        idade = input("Idade: ")
-
-        if not idade.isdigit():
-
-            print("Idade inválida!")
-
-        else:
-
-            idade = int(idade)
-            break
-
-    while True:
-
-        sexo = input("Sexo (M/F): ").upper()
-
-        if sexo not in ["M", "F"]:
-
-            print("Sexo inválido!")
-
-        else:
-
-            break
-
-    while True:
-
-        telefone = input("Telefone: ")
-
-        if not validar_telefone(telefone):
-
-            print("Telefone inválido!")
-
-        else:
-
-            telefone = ''.join(filter(str.isdigit, telefone))
-            break
+    raca = input("Raça/Cor: ").strip().title()
+    telefone = input("Telefone: ")
+    while not (tel_formatado := formatar_telefone(telefone)):
+        print("Telefone inválido!"); telefone = input("Telefone: ")
 
     endereco = input("Endereço: ").strip()
+    while True:
+        tipo_sanguineo = input("Tipo sanguíneo (ex: A+): ").strip().upper()
+        if validar_tipo_sanguineo(tipo_sanguineo): break
+        print("Tipo inválido!")
 
-    tipo_sanguineo = input("Tipo sanguíneo: ").upper()
-
-    sql = """
-    INSERT INTO pacientes (
-
-        cpf,
-        nome,
-        idade,
-        sexo,
-        telefone,
-        endereco,
-        tipo_sanguineo
-
-    )
-
-    VALUES (%s,%s,%s,%s,%s,%s,%s)
-    """
-
-    valores = (
-
-        cpf,
-        nome,
-        idade,
-        sexo,
-        telefone,
-        endereco,
-        tipo_sanguineo
-
-    )
-
-    cursor.execute(sql, valores)
-
+    sql = """INSERT INTO pacientes 
+    (cpf, nome, idade, sexo, data_nascimento, raca, telefone, endereco, tipo_sanguineo)
+    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
+    cursor.execute(sql, (cpf, nome, idade, sexo, data_nasc, raca, tel_formatado, endereco, tipo_sanguineo))
     conexao.commit()
+    print(f"\nPaciente cadastrado com sucesso! (Idade: {idade} anos)\n")
 
-    print("\nPaciente cadastrado!\n")
-
-# ============================================================
-# ANAMNESE
-# ============================================================
-
-def cadastrar_anamnese():
-
-    global medico_logado
-
-    print("\n========== ANAMNESE ==========\n")
-
-    cpf = input("CPF do paciente: ")
-
-    sql = "SELECT * FROM pacientes WHERE cpf = %s"
-
-    cursor.execute(sql, (cpf,))
-
-    resultado = cursor.fetchone()
-
-    if not resultado:
-
-        print("\nPaciente não encontrado!\n")
+def alterar_paciente():
+    print("\n========== ALTERAR PACIENTE ==========\n")
+    cpf = input("CPF do paciente: ").strip()
+    
+    cursor.execute("SELECT * FROM pacientes WHERE cpf = %s", (cpf,))
+    paciente = cursor.fetchone()
+    if not paciente:
+        print("Paciente não encontrado!")
         return
 
-    possui_doenca = input("Possui doença? (SIM/NAO): ").upper()
+    print("Deixe em branco para manter o valor atual.\n")
+    
+    nome = input(f"Nome ({paciente[1]}): ").strip()
+    nome = formatar_nome(nome) if nome else paciente[1]
 
-    doencas = ""
+    data_nasc_input = input(f"Data Nascimento ({paciente[4] or ''}): ").strip()
+    if data_nasc_input:
+        idade = calcular_idade(data_nasc_input)
+        data_nasc = data_nasc_input if idade is not None else paciente[4]
+        idade = idade if idade is not None else paciente[2]
+    else:
+        data_nasc = paciente[4]
+        idade = paciente[2]
 
-    if possui_doenca == "SIM":
+    raca = input(f"Raça ({paciente[5] or 'Não informada'}): ").strip().title() or (paciente[5] or "")
 
-        doencas = formatar_doencas(input("Doenças: "))
+    tel_atual = paciente[6] if len(paciente) > 6 else ""
+    telefone = input(f"Telefone ({tel_atual}): ").strip()
+    if telefone:
+        tel_formatado = formatar_telefone(telefone)
+        telefone = tel_formatado if tel_formatado else tel_atual
+    else:
+        telefone = tel_atual
+
+    endereco = input(f"Endereço ({paciente[7] if len(paciente) > 7 else ''}): ").strip() or (paciente[7] if len(paciente) > 7 else "")
+
+    tipo_atual = paciente[8] if len(paciente) > 8 else ""
+    tipo_sanguineo = input(f"Tipo sanguíneo ({tipo_atual}): ").strip().upper()
+    if tipo_sanguineo:
+        if not validar_tipo_sanguineo(tipo_sanguineo):
+            print("Tipo sanguíneo inválido! Mantendo atual.")
+            tipo_sanguineo = tipo_atual
+    else:
+        tipo_sanguineo = tipo_atual
+
+    sql = """
+    UPDATE pacientes 
+    SET nome=%s, idade=%s, data_nascimento=%s, raca=%s, telefone=%s, 
+        endereco=%s, tipo_sanguineo=%s
+    WHERE cpf=%s
+    """
+    cursor.execute(sql, (nome, idade, data_nasc, raca, telefone, endereco, tipo_sanguineo, cpf))
+    conexao.commit()
+    print("\nPaciente atualizado com sucesso!\n")
+
+def listar_pacientes_medico():
+    print("\n========== MEUS PACIENTES ==========\n")
+    cursor.execute("SELECT * FROM pacientes ORDER BY nome")
+    pacientes = cursor.fetchall()
+    if not pacientes:
+        print("Nenhum paciente cadastrado.")
+        return
+    for p in pacientes:
+        print(f"CPF: {p[0]} | Nome: {p[1]} | Idade: {p[2]} | Raça: {p[5] or '-'} | Tipo: {p[8] or '-'}")
+    print()
+
+
+# ============================================================
+# ANAMNESE (com SIM/NAO para Fuma e Bebe)
+# ============================================================
+def cadastrar_anamnese():
+    print("\n========== CADASTRO DE ANAMNESE ==========\n")
+    cpf = input("CPF do paciente: ")
+    cursor.execute("SELECT * FROM pacientes WHERE cpf = %s", (cpf,))
+    if not cursor.fetchone():
+        print("Paciente não encontrado!"); return
+
+    possui_doenca = input("Possui alguma doença? (SIM/NAO): ").upper() == "SIM"
+    doencas = formatar_doencas(input("Quais doenças? (separadas por vírgula): ")) if possui_doenca else ""
+
+    # Remédio
+    toma_remedio = input("Toma algum medicamento? (SIM/NAO): ").upper() == "SIM"
+    nome_remedio = dosagem = data_inicio = data_fim = None
+    if toma_remedio:
+        nome_remedio = input("Nome do medicamento: ").strip()
+        dosagem = float(input("Dosagem (mg): ") or 0)
+        data_inicio = input("Data de início (DD-MM-AAAA): ") or None
+        data_fim = input("Data de término (DD-MM-AAAA): ") or None
+
+    # Fuma
+    fuma = input("Fuma atualmente? (SIM/NAO): ").upper() == "SIM"
+    fumante = input("Status do fumo (ATUAL / EX-FUMANTE / NUNCA): ").upper() if fuma else "NUNCA"
+    if fumante not in ['ATUAL', 'EX-FUMANTE', 'NUNCA']: fumante = 'NUNCA'
+
+    # Bebe
+    bebe = input("Bebe álcool? (SIM/NAO): ").upper() == "SIM"
+    bebe_alcool = input("Status (BEBE / EX-BEBEDOR / NUNCA): ").upper() if bebe else "NUNCA"
+    if bebe_alcool not in ['BEBE', 'EX-BEBEDOR', 'NUNCA']: bebe_alcool = 'NUNCA'
+    frequencia_bebida = input("Frequência (ex: 2x por semana): ").strip() if bebe else ""
 
     observacoes = input("Observações: ").strip()
 
     sql = """
-    INSERT INTO anamneses (
-
-        cpf_paciente,
-        rm_medico,
-        possui_doenca,
-        doencas,
-        observacoes
-
-    )
-
-    VALUES (%s,%s,%s,%s,%s)
+    INSERT INTO anamneses 
+    (cpf_paciente, rm_medico, possui_doenca, doencas, observacoes, 
+     toma_remedio, nome_remedio, dosagem_mg, data_inicio_remedio, data_fim_remedio,
+     fumante, bebe_alcool, frequencia_bebida)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
-
-    valores = (
-
-        cpf,
-        medico_logado,
-        possui_doenca,
-        doencas,
-        observacoes
-
-    )
-
+    valores = (cpf, medico_logado, possui_doenca, doencas, observacoes,
+               toma_remedio, nome_remedio, dosagem, data_inicio, data_fim,
+               fumante, bebe_alcool, frequencia_bebida)
+    
     cursor.execute(sql, valores)
-
     conexao.commit()
+    print("\nAnamnese salva com sucesso!\n")
 
-    print("\nAnamnese salva!\n")
 
 # ============================================================
-# GERAR LAUDO IA
+# GERAR LAUDO IA (Corrigido)
 # ============================================================
-
 def gerar_laudo():
-
-    global medico_logado
-
     print("\n========== IA CLÍNICA ==========\n")
-
-    cpf = input("CPF do paciente: ")
-
-    sql = "SELECT * FROM pacientes WHERE cpf = %s"
-
-    cursor.execute(sql, (cpf,))
-
-    resultado_paciente = cursor.fetchone()
-
-    if not resultado_paciente:
-
-        print("\nPaciente não encontrado!\n")
+    cpf = input("CPF do paciente: ").strip()
+    cursor.execute("SELECT * FROM pacientes WHERE cpf = %s", (cpf,))
+    if not cursor.fetchone():
+        print("Paciente não encontrado!")
         return
 
-    idade = float(input("Idade: "))
-    psa_total = float(input("PSA Total: "))
-    psa_densidade = float(input("Densidade PSA: "))
-    psa_livre = float(input("PSA Livre: "))
-    relacao_LT = float(input("Relação L/T (%): "))
+    try:
+        idade = float(input("Idade: "))
+        psa_total = float(input("PSA Total: "))
+        psa_densidade = float(input("Densidade PSA: "))
+        psa_livre = float(input("PSA Livre: "))
+        relacao_LT = float(input("Relação L/T (%): "))
 
-    entrada = pd.DataFrame([[
+        entrada = pd.DataFrame([[psa_total, psa_livre, relacao_LT, idade, psa_densidade]], columns=X.columns)
 
-        psa_total,
-        psa_livre,
-        relacao_LT,
-        idade,
-        psa_densidade
+        resultado = clf_calibrated.predict(entrada)[0]
+        probabilidade = clf_calibrated.predict_proba(entrada)[0]
+        
+        status = "SUSPEITO (BióPSIA)" if resultado == 1 else "BENIGNO (MONITORAR)"
+        confianca = probabilidade[resultado] * 100
 
-    ]], columns=X.columns)
+        print("\n" + "="*50)
+        print(f"Diagnóstico: {status}")
+        print(f"Confiança: {confianca:.2f}%")
+        print("="*50)
 
-    resultado = clf_calibrated.predict(entrada)[0]
+        sql = """
+        INSERT INTO laudos 
+        (cpf_paciente, rm_medico, idade, psa_total, psa_livre, psa_densidade, 
+         relacao_lt, classificacao_risco, resultado, observacoes)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """
+        valores = (cpf, medico_logado, idade, psa_total, psa_livre, psa_densidade,
+                   relacao_LT, status, f"{confianca:.2f}%", "Laudo gerado pela IA")
+        cursor.execute(sql, valores)
+        conexao.commit()
+        print("\nLaudo salvo com sucesso!\n")
 
-    probabilidade = clf_calibrated.predict_proba(entrada)[0]
+    except Exception as e:
+        print(f"\nErro ao gerar laudo: {e}")
 
-    status = ""
 
-    if resultado == 1:
+def listar_laudos_medico():
+    print("\n========== MEUS LAUDOS ==========\n")
+    cursor.execute("""SELECT l.data_laudo, p.nome, l.resultado 
+                      FROM laudos l JOIN pacientes p ON l.cpf_paciente = p.cpf 
+                      WHERE l.rm_medico = %s ORDER BY l.data_laudo DESC""", (medico_logado,))
+    for row in cursor.fetchall():
+        print(f"Data: {row[0]} | Paciente: {row[1]} | Resultado: {row[2]}")
 
-        status = "SUSPEITO (BióPSIA)"
 
-    else:
+def listar_laudos_paciente():
+    cpf = input("\nDigite o CPF do paciente: ").strip()
+    print(f"\n========== LAUDOS DO PACIENTE {cpf} ==========\n")
+    cursor.execute("""SELECT data_laudo, resultado 
+                      FROM laudos WHERE cpf_paciente = %s AND rm_medico = %s 
+                      ORDER BY data_laudo DESC""", (cpf, medico_logado))
+    for row in cursor.fetchall():
+        print(f"Data: {row[0]} | Resultado: {row[1]}")
 
-        status = "BENIGNO (MONITORAR)"
-
-    confianca = probabilidade[resultado] * 100
-
-    print("\n========== RESULTADO ==========\n")
-
-    print(f"Diagnóstico: {status}")
-
-    print(f"Confiança: {confianca:.2f}%")
-
-    sql = """
-    INSERT INTO laudos (
-
-        cpf_paciente,
-        rm_medico,
-        idade,
-        psa_total,
-        psa_livre,
-        psa_densidade,
-        relacao_lt,
-        classificacao_risco,
-        resultado,
-        observacoes
-
-    )
-
-    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-    """
-
-    valores = (
-
-        cpf,
-        medico_logado,
-        idade,
-        psa_total,
-        psa_livre,
-        psa_densidade,
-        relacao_LT,
-        status,
-        f"{confianca:.2f}%",
-        "Laudo gerado automaticamente pela IA"
-
-    )
-
-    cursor.execute(sql, valores)
-
-    conexao.commit()
-
-    print("\nLaudo salvo!\n")
 
 # ============================================================
-# LISTAR LAUDOS
+# MENU PRINCIPAL
 # ============================================================
-
-def listar_laudos():
-
-    sql = "SELECT * FROM laudos"
-
-    cursor.execute(sql)
-
-    dados = cursor.fetchall()
-
-    print("\n========== LAUDOS ==========\n")
-
-    for linha in dados:
-
-        print(linha)
-
-# ============================================================
-# MENU
-# ============================================================
-
 while True:
-
-    print("\n================ MENU ================\n")
-
+    print("\n" + "="*60)
     if medico_logado is None:
-
         print("1 - Cadastrar médico")
         print("2 - Login")
         print("3 - Sair")
-
         opcao = input("\nEscolha: ")
-
-        if opcao == "1":
-
-            cadastrar_medico()
-
-        elif opcao == "2":
-
-            login_medico()
-
-        elif opcao == "3":
-
-            break
-
-        else:
-
-            print("\nOpção inválida!")
-
+        if opcao == "1": cadastrar_medico()
+        elif opcao == "2": login_medico()
+        elif opcao == "3": break
+        else: print("Opção inválida!")
     else:
-
-        print(f"Médico logado RM: {medico_logado}\n")
-
+        print(f"Médico logado - RM: {medico_logado}\n")
         print("1 - Cadastrar paciente")
-        print("2 - Cadastrar anamnese")
-        print("3 - Gerar laudo IA")
-        print("4 - Listar laudos")
-        print("5 - Logout")
-
+        print("2 - Alterar paciente")
+        print("3 - Cadastrar anamnese")
+        print("4 - Gerar laudo IA")
+        print("5 - Meus pacientes")
+        print("6 - Meus laudos")
+        print("7 - Laudos de um paciente")
+        print("8 - Logout")
         opcao = input("\nEscolha: ")
 
-        if opcao == "1":
-
-            cadastrar_paciente()
-
-        elif opcao == "2":
-
-            cadastrar_anamnese()
-
-        elif opcao == "3":
-
-            gerar_laudo()
-
-        elif opcao == "4":
-
-            listar_laudos()
-
-        elif opcao == "5":
-
-            logout()
-
-        else:
-
-            print("\nOpção inválida!")
+        if opcao == "1": cadastrar_paciente()
+        elif opcao == "2": alterar_paciente()  # Use a função que você já tem
+        elif opcao == "3": cadastrar_anamnese()
+        elif opcao == "4": gerar_laudo()
+        elif opcao == "5": listar_pacientes_medico()
+        elif opcao == "6": listar_laudos_medico()
+        elif opcao == "7": listar_laudos_paciente()
+        elif opcao == "8": logout()
+        else: print("Opção inválida!")
 
 # ============================================================
-# FECHAR
+# FECHAR CONEXÃO
 # ============================================================
-
 cursor.close()
-
 conexao.close()
-
 print("\nSistema encerrado!")
