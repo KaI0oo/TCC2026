@@ -40,7 +40,7 @@ clf_calibrated = CalibratedClassifierCV(clf, cv=5, method='sigmoid')
 clf_calibrated.fit(X_train, y_train)
 
 # ============================================================
-# FUNÇÕES AUXILIARES
+# FUNÇÕES AUXILIARES (Sem compressão e sem capitalize)
 # ============================================================
 def validar_cpf(cpf):
     cpf = ''.join(filter(str.isdigit, cpf))
@@ -66,14 +66,33 @@ def formatar_telefone(telefone):
     return None
 
 def formatar_nome(nome):
-    return nome.strip().title()
+    if not nome:
+        return ""
+    nome = nome.strip()
+    palavras = nome.split()
+    resultado = []
+    for palavra in palavras:
+        if palavra:
+            primeira_letra = palavra[0].upper()
+            resto = palavra[1:].lower() if len(palavra) > 1 else ""
+            resultado.append(primeira_letra + resto)
+    return " ".join(resultado)
 
 def formatar_doencas(doencas):
-    lista = [doenca.strip().capitalize() for doenca in doencas.split(",")]
-    return ", ".join(lista)
+    if not doencas:
+        return ""
+    lista = doencas.split(",")
+    lista_formatada = []
+    for doenca in lista:
+        doenca_limpa = doenca.strip()
+        if doenca_limpa:
+            primeira_letra = doenca_limpa[0].upper()
+            resto = doenca_limpa[1:].lower() if len(doenca_limpa) > 1 else ""
+            lista_formatada.append(primeira_letra + resto)
+    return ", ".join(lista_formatada)
 
 # ============================================================
-# CADASTRO E LOGIN MÉDICO
+# MÉDICO
 # ============================================================
 def cadastrar_medico():
     global medico_logado
@@ -149,7 +168,7 @@ def cadastrar_paciente():
     sexo = input("Sexo (M/F): ").upper()
     while sexo not in ["M", "F"]: sexo = input("Sexo (M/F): ").upper()
 
-    raca = input("Raça/Cor: ").strip().title()
+    raca = formatar_nome(input("Raça/Cor: "))
     telefone = input("Telefone: ")
     while not (tel_formatado := formatar_telefone(telefone)):
         print("Telefone inválido!"); telefone = input("Telefone: ")
@@ -166,6 +185,7 @@ def cadastrar_paciente():
     cursor.execute(sql, (cpf, nome, idade, sexo, data_nasc, raca, tel_formatado, endereco, tipo_sanguineo))
     conexao.commit()
     print(f"\nPaciente cadastrado com sucesso! (Idade: {idade} anos)\n")
+
 
 def alterar_paciente():
     print("\n========== ALTERAR PACIENTE ==========\n")
@@ -191,7 +211,7 @@ def alterar_paciente():
         data_nasc = paciente[4]
         idade = paciente[2]
 
-    raca = input(f"Raça ({paciente[5] or 'Não informada'}): ").strip().title() or (paciente[5] or "")
+    raca = formatar_nome(input(f"Raça ({paciente[5] or 'Não informada'}): ")) or (paciente[5] or "")
 
     tel_atual = paciente[6] if len(paciente) > 6 else ""
     telefone = input(f"Telefone ({tel_atual}): ").strip()
@@ -222,6 +242,7 @@ def alterar_paciente():
     conexao.commit()
     print("\nPaciente atualizado com sucesso!\n")
 
+
 def listar_pacientes_medico():
     print("\n========== MEUS PACIENTES ==========\n")
     cursor.execute("SELECT * FROM pacientes ORDER BY nome")
@@ -233,9 +254,8 @@ def listar_pacientes_medico():
         print(f"CPF: {p[0]} | Nome: {p[1]} | Idade: {p[2]} | Raça: {p[5] or '-'} | Tipo: {p[8] or '-'}")
     print()
 
-
 # ============================================================
-# ANAMNESE (com SIM/NAO para Fuma e Bebe)
+# ANAMNESE
 # ============================================================
 def cadastrar_anamnese():
     print("\n========== CADASTRO DE ANAMNESE ==========\n")
@@ -247,7 +267,6 @@ def cadastrar_anamnese():
     possui_doenca = input("Possui alguma doença? (SIM/NAO): ").upper() == "SIM"
     doencas = formatar_doencas(input("Quais doenças? (separadas por vírgula): ")) if possui_doenca else ""
 
-    # Remédio
     toma_remedio = input("Toma algum medicamento? (SIM/NAO): ").upper() == "SIM"
     nome_remedio = dosagem = data_inicio = data_fim = None
     if toma_remedio:
@@ -256,12 +275,10 @@ def cadastrar_anamnese():
         data_inicio = input("Data de início (DD-MM-AAAA): ") or None
         data_fim = input("Data de término (DD-MM-AAAA): ") or None
 
-    # Fuma
     fuma = input("Fuma atualmente? (SIM/NAO): ").upper() == "SIM"
     fumante = input("Status do fumo (ATUAL / EX-FUMANTE / NUNCA): ").upper() if fuma else "NUNCA"
     if fumante not in ['ATUAL', 'EX-FUMANTE', 'NUNCA']: fumante = 'NUNCA'
 
-    # Bebe
     bebe = input("Bebe álcool? (SIM/NAO): ").upper() == "SIM"
     bebe_alcool = input("Status (BEBE / EX-BEBEDOR / NUNCA): ").upper() if bebe else "NUNCA"
     if bebe_alcool not in ['BEBE', 'EX-BEBEDOR', 'NUNCA']: bebe_alcool = 'NUNCA'
@@ -284,9 +301,8 @@ def cadastrar_anamnese():
     conexao.commit()
     print("\nAnamnese salva com sucesso!\n")
 
-
 # ============================================================
-# GERAR LAUDO IA (Corrigido)
+# LAUDOS
 # ============================================================
 def gerar_laudo():
     print("\n========== IA CLÍNICA ==========\n")
@@ -327,7 +343,6 @@ def gerar_laudo():
         cursor.execute(sql, valores)
         conexao.commit()
         print("\nLaudo salvo com sucesso!\n")
-
     except Exception as e:
         print(f"\nErro ao gerar laudo: {e}")
 
@@ -335,8 +350,10 @@ def gerar_laudo():
 def listar_laudos_medico():
     print("\n========== MEUS LAUDOS ==========\n")
     cursor.execute("""SELECT l.data_laudo, p.nome, l.resultado 
-                      FROM laudos l JOIN pacientes p ON l.cpf_paciente = p.cpf 
-                      WHERE l.rm_medico = %s ORDER BY l.data_laudo DESC""", (medico_logado,))
+                      FROM laudos l 
+                      JOIN pacientes p ON l.cpf_paciente = p.cpf 
+                      WHERE l.rm_medico = %s 
+                      ORDER BY l.data_laudo DESC""", (medico_logado,))
     for row in cursor.fetchall():
         print(f"Data: {row[0]} | Paciente: {row[1]} | Resultado: {row[2]}")
 
@@ -345,7 +362,8 @@ def listar_laudos_paciente():
     cpf = input("\nDigite o CPF do paciente: ").strip()
     print(f"\n========== LAUDOS DO PACIENTE {cpf} ==========\n")
     cursor.execute("""SELECT data_laudo, resultado 
-                      FROM laudos WHERE cpf_paciente = %s AND rm_medico = %s 
+                      FROM laudos 
+                      WHERE cpf_paciente = %s AND rm_medico = %s 
                       ORDER BY data_laudo DESC""", (cpf, medico_logado))
     for row in cursor.fetchall():
         print(f"Data: {row[0]} | Resultado: {row[1]}")
@@ -378,7 +396,7 @@ while True:
         opcao = input("\nEscolha: ")
 
         if opcao == "1": cadastrar_paciente()
-        elif opcao == "2": alterar_paciente()  # Use a função que você já tem
+        elif opcao == "2": alterar_paciente()
         elif opcao == "3": cadastrar_anamnese()
         elif opcao == "4": gerar_laudo()
         elif opcao == "5": listar_pacientes_medico()
