@@ -201,6 +201,16 @@
                                     FontWeight="Bold"
                                     Background="#00BCD4"
                                     Foreground="White"/>
+                            <Button Content="Menu Principal"
+                                    
+                                    Height="45"
+                                    Margin="0,15,0,0"
+                                    FontSize="16"
+                                    FontWeight="Bold"
+                                    Background="#00838F"
+                                    Foreground="White"
+                                   
+                                    Click="VoltarMenu_Click"/>      
 
                         </StackPanel>
 

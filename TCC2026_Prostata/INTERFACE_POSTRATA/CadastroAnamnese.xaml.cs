@@ -21,5 +21,11 @@ namespace INTERFACE_POSTRATA
         {
             InitializeComponent();
         }
+        private void VoltarMenu_Click(object sender, RoutedEventArgs e)
+        {
+            new Window1().Show();
+            this.Close();
+        }
+
     }
 }

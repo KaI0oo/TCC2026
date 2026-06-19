@@ -32,6 +32,10 @@ namespace INTERFACE_POSTRATA
 
             ProcessStartInfo psi = new ProcessStartInfo();
 
+            psi.FileName = @"C:\Users\kaioc\AppData\Local\Programs\Python\Python314\python.exe";
+
+
+            psi.Arguments = @"C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\executar_ia.py " +idade + " " +psaTotal + " " +psaLivre + " " +densidade;
             psi.FileName =
 @"C:\Users\kaioc\AppData\Local\Programs\Python\Python314\python.exe";
 
@@ -68,6 +72,11 @@ densidade;
     densidade,
     resultadoIA
 ); tela.Show();
+            this.Close();
+        }
+        private void VoltarMenu_Click(object sender, RoutedEventArgs e)
+        {
+            new Window1().Show();
             this.Close();
         }
     }

@@ -22,6 +22,7 @@
 
                     <!-- TOPO -->
 
+                    <TextBlock Text="CLÍNICA "
                     <TextBlock Text="CLÍNICA VIDA SAUDÁVEL"
                                FontSize="28"
                                FontWeight="Bold"
@@ -165,6 +166,8 @@
 
                         <TextBlock x:Name="txtCRM"
                                    HorizontalAlignment="Center"/>
+                        <Button Content="Voltar ao Menu" Width="180" Height="45" Margin="0,0,20,0" Background="#00BCD4" Foreground="White" FontWeight="Bold" Click="VoltarMenu_Click"/>
+                        
 
                     </StackPanel>
 

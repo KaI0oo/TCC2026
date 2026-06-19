@@ -62,5 +62,10 @@ namespace INTERFACE_POSTRATA
                 txtCRM.Text = crm;
             }
         }
+        private void VoltarMenu_Click(object sender, RoutedEventArgs e)
+        {
+            new Window1().Show();
+            this.Close();
+        }
     }
 }

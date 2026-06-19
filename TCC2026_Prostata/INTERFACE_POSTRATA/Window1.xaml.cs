@@ -1,4 +1,6 @@
 ﻿using System.Windows;
+using INTERFACE_POSTRATA.Banco;
+using MySql.Data.MySqlClient;
 
 namespace INTERFACE_POSTRATA
 {
@@ -7,6 +9,22 @@ namespace INTERFACE_POSTRATA
         public Window1()
         {
             InitializeComponent();
+            try
+            {
+                MySqlConnection conn = Conexao.ObterConexao();
+
+                MessageBox.Show("Banco conectado!");
+
+                conn.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        // CADASTRO
+
         }
 
         private void CadastrarPaciente_Click(object sender, RoutedEventArgs e)
@@ -24,12 +42,62 @@ namespace INTERFACE_POSTRATA
             new CadastroExame().Show();
         }
 
+        // LAUDOS
+
         private void GerarLaudo_Click(object sender, RoutedEventArgs e)
         {
             CadastroExame tela = new CadastroExame();
             tela.Show();
             this.Close();
         }
+
+        // CONSULTAS - PACIENTES
+
+        private void BuscarPaciente_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Tela Buscar Paciente ainda não criada.");
+        }
+
+        private void BuscarTodosPacientes_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Tela Buscar Todos os Pacientes ainda não criada.");
+        }
+
+        // CONSULTAS - EXAMES
+
+        private void BuscarExamePaciente_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Tela Buscar Exame de um Paciente ainda não criada.");
+        }
+
+        private void BuscarTodosExames_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Tela Buscar Todos os Exames ainda não criada.");
+        }
+
+        private void BuscarTodosExamesPaciente_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Tela Buscar Todos os Exames de um Paciente ainda não criada.");
+        }
+
+        // CONSULTAS - LAUDOS
+
+        private void BuscarLaudoPaciente_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Tela Buscar um Laudo de um Paciente ainda não criada.");
+        }
+
+        private void BuscarTodosLaudosPaciente_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Tela Buscar Todos os Laudos de um Paciente ainda não criada.");
+        }
+
+        private void BuscarTodosLaudos_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Tela Buscar Todos os Laudos ainda não criada.");
+        }
+
+        // CONTA
 
         private void ListarPacientes_Click(object sender, RoutedEventArgs e)
         {
@@ -51,5 +119,16 @@ namespace INTERFACE_POSTRATA
         {
             Application.Current.Shutdown();
         }
+
+
+
+
+
+
+
+
+
+
+
     }
 }
