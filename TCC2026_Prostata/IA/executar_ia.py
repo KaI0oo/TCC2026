@@ -2,9 +2,11 @@ import pickle
 import pandas as pd
 import sys
 import os
-import warnings
+from IA_generator import gerar_modelo
 
-warnings.filterwarnings("ignore")
+if not os.path.exists("./INTERFACE_POSTRATA/IA/IA.pkl"):
+    gerar_modelo()
+
 pasta_atual = os.path.dirname(os.path.abspath(__file__))
 
 caminho_modelo = os.path.join(pasta_atual, "IA.pkl")
