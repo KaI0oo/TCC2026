@@ -4,7 +4,7 @@ import sys
 import os
 from IA_generator import gerar_modelo
 
-if not os.path.exists("./INTERFACE_POSTRATA/IA/IA.pkl"):
+if not os.path.exists("./TCC2026_Prostata/IA/IA.pkl"):
     gerar_modelo()
 
 pasta_atual = os.path.dirname(os.path.abspath(__file__))

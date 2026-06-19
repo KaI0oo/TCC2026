@@ -5,7 +5,7 @@ from sklearn.calibration import CalibratedClassifierCV
 import pickle
 
 def gerar_modelo():
-    df = pd.read_csv("./TCC2026/IA/dados_psa_clinica.csv")
+    df = pd.read_csv("./TCC2026_Prostata/IA/dados_psa_clinica.csv")
     X = df.drop('Resultado', axis=1)
     y = df['Resultado']
 
@@ -19,5 +19,7 @@ def gerar_modelo():
     clf_calibrated = CalibratedClassifierCV(clf, cv=5, method='sigmoid')
     clf_calibrated.fit(X_train, y_train)
 
-    with open("./TCC2026/IA/IA.pkl", "wb") as arquivo:
+    with open("./TCC2026_Prostata/IA/IA.pkl", "wb") as arquivo:
         pickle.dump(clf_calibrated, arquivo)
+        
+# gerar_modelo()
