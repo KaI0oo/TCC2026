@@ -186,4 +186,189 @@
 
         </Grid>
     </Grid>
+
+        <Viewbox Stretch="Uniform">
+
+            <Grid Width="1920"
+                  Height="1080"
+                  Background="#F4FDFD">
+
+                <!-- TOPO -->
+
+                <Border Background="#0097A7"
+                        Height="95"
+                        VerticalAlignment="Top">
+
+                    <Grid>
+
+                        <Grid.ColumnDefinitions>
+
+                            <ColumnDefinition Width="320"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="350"/>
+
+                        </Grid.ColumnDefinitions>
+
+                        <!-- FOTO + MÉDICO -->
+
+                        <StackPanel Grid.Column="0"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="15,0,0,0">
+
+                            <Border BorderBrush="White"
+                                    BorderThickness="2"
+                                    Width="65"
+                                    Height="65">
+
+                                <Image Stretch="Fill"/>
+
+                            </Border>
+
+                            <StackPanel Margin="12,0,0,0"
+                                        VerticalAlignment="Center">
+
+                                <TextBlock Text="Dr. João Silva"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="White"/>
+
+                                <TextBlock Text="CRM 123456"
+                                           FontSize="15"
+                                           Foreground="#E0F7FA"/>
+
+                            </StackPanel>
+
+                        </StackPanel>
+
+                        <!-- TÍTULO -->
+
+                        <TextBlock Grid.Column="1"
+                                   Text="Sistema de Laudos Médicos"
+                                   FontSize="30"
+                                   FontWeight="Bold"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+
+                        <!-- MENU -->
+
+                        <Menu Grid.Column="2"
+                              Background="#0097A7"
+                              Foreground="White"
+                              FontSize="17"
+                              FontWeight="Bold"
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Right"
+                              Margin="0,0,20,0">
+
+                            <Menu.Resources>
+
+                                <Style TargetType="MenuItem">
+
+                                    <Setter Property="Foreground"
+                                            Value="White"/>
+
+                                    <Setter Property="Background"
+                                            Value="#0097A7"/>
+
+                                    <Setter Property="FontWeight"
+                                            Value="Bold"/>
+
+                                    <Setter Property="FontSize"
+                                            Value="16"/>
+
+                                </Style>
+
+                            </Menu.Resources>
+
+                            <!-- PACIENTES -->
+
+                            <MenuItem Header="Pacientes">
+
+                                <MenuItem Header="Cadastrar Paciente"
+                                          Click="CadastrarPaciente_Click"/>
+
+                                <MenuItem Header="Cadastrar Anamnese"
+                                          Click="CadastrarAnamnese_Click"/>
+
+                                <MenuItem Header="Cadastrar Exame"
+                                          Click="CadastrarExame_Click"/>
+
+                                <Separator/>
+
+                                <MenuItem Header="Listar Pacientes"/>
+
+                            </MenuItem>
+
+                            <!-- LAUDOS -->
+
+                            <MenuItem Header="Laudos">
+
+                                <MenuItem Header="Gerar Laudo"
+                                          Click="GerarLaudo_Click"/>
+
+                                <MenuItem Header="Listar Laudos"
+                                          Click="ListarLaudos_Click"/>
+
+                            </MenuItem>
+
+                            <!-- CONTA -->
+
+                            <MenuItem Header="Conta">
+
+                                <MenuItem Header="Logout"
+                                          Click="Logout_Click"/>
+
+                                <MenuItem Header="Sair"
+                                          Click="Sair_Click"/>
+
+                            </MenuItem>
+
+                        </Menu>
+
+                    </Grid>
+
+                </Border>
+
+                <!-- ÁREA CENTRAL -->
+
+                <Border Background="White"
+                        Margin="30,120,30,30"
+                        CornerRadius="15">
+
+                    <Grid>
+
+                        <Label Content="Painel Principal"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               Foreground="#006064"
+                               HorizontalAlignment="Center"
+                               Margin="0,20,0,0"
+                               VerticalAlignment="Top"/>
+
+                        <StackPanel Margin="40,100,40,40">
+
+                            <TextBlock Text="Bem-vindo ao sistema da clínica."
+                                       FontSize="22"
+                                       FontWeight="SemiBold"
+                                       Foreground="Black"
+                                       Margin="0,0,0,15"/>
+
+                            <TextBlock Text="Selecione uma opção no menu acima para iniciar."
+                                       FontSize="17"
+                                       Foreground="Gray"/>
+
+                        </StackPanel>
+
+                    </Grid>
+
+                </Border>
+
+            </Grid>
+
+        </Viewbox>
+
+    </Grid>
+
 </Window>

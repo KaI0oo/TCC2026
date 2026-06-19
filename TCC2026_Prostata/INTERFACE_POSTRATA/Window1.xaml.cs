@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using INTERFACE_POSTRATA.Banco;
 using MySql.Data.MySqlClient;
+
 namespace INTERFACE_POSTRATA
 {
     public partial class Window1 : Window
@@ -23,6 +24,8 @@ namespace INTERFACE_POSTRATA
         }
 
         // CADASTRO
+
+        }
 
         private void CadastrarPaciente_Click(object sender, RoutedEventArgs e)
         {
@@ -95,6 +98,16 @@ namespace INTERFACE_POSTRATA
         }
 
         // CONTA
+
+        private void ListarPacientes_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Tela ainda não criada.");
+        }
+
+        private void ListarLaudos_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Tela ainda não criada.");
+        }
 
         private void Logout_Click(object sender, RoutedEventArgs e)
         {

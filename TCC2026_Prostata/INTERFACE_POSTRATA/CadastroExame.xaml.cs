@@ -36,6 +36,15 @@ namespace INTERFACE_POSTRATA
 
 
             psi.Arguments = @"C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\executar_ia.py " +idade + " " +psaTotal + " " +psaLivre + " " +densidade;
+            psi.FileName =
+@"C:\Users\kaioc\AppData\Local\Programs\Python\Python314\python.exe";
+
+            psi.Arguments =
+@"C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\executar_ia.py " +
+idade + " " +
+psaTotal + " " +
+psaLivre + " " +
+densidade;
 
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;

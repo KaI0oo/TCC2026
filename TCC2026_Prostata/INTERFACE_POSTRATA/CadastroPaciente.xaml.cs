@@ -11,6 +11,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using INTERFACE_POSTRATA.Banco;
 using MySql.Data.MySqlClient;
+
 namespace INTERFACE_POSTRATA
 {
     /// <summary>

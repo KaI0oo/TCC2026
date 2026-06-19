@@ -115,6 +115,8 @@
         Foreground="White"
         
         Click="VoltarMenu_Click"/>
+                                    Foreground="White"/>
+
                         </StackPanel>
 
                     </ScrollViewer>
