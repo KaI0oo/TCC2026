@@ -1,5 +1,6 @@
 ﻿using System.Windows;
-
+using INTERFACE_POSTRATA.Banco;
+using MySql.Data.MySqlClient;
 namespace INTERFACE_POSTRATA
 {
     public partial class Window1 : Window
@@ -7,6 +8,18 @@ namespace INTERFACE_POSTRATA
         public Window1()
         {
             InitializeComponent();
+            try
+            {
+                MySqlConnection conn = Conexao.ObterConexao();
+
+                MessageBox.Show("Banco conectado!");
+
+                conn.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         // CADASTRO
@@ -93,5 +106,16 @@ namespace INTERFACE_POSTRATA
         {
             Application.Current.Shutdown();
         }
+
+
+
+
+
+
+
+
+
+
+
     }
 }

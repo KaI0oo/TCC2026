@@ -9,7 +9,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-
+using INTERFACE_POSTRATA.Banco;
+using MySql.Data.MySqlClient;
 namespace INTERFACE_POSTRATA
 {
     /// <summary>
@@ -27,5 +28,83 @@ namespace INTERFACE_POSTRATA
             this.Close();
         }
 
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                MySqlConnection conn = Conexao.ObterConexao();
+
+                string sql =
+                    @"INSERT INTO paciente
+                    (
+                        cpf,
+                        nome,
+                        idade,
+                        sexo,
+                        data_nascimento,
+                        raca,
+                        telefone,
+                        endereco,
+                        tipo_sanguineo,
+                        rm_medico
+                    )
+                    VALUES
+                    (
+                        @cpf,
+                        @nome,
+                        @idade,
+                        @sexo,
+                        @data,
+                        @raca,
+                        @telefone,
+                        @endereco,
+                        @sangue,
+                        @medico
+                    )";
+
+                MySqlCommand cmd = new MySqlCommand(sql, conn);
+
+                cmd.Parameters.AddWithValue("@cpf", txtCPF.Text);
+                cmd.Parameters.AddWithValue("@nome", txtNome.Text);
+                cmd.Parameters.AddWithValue("@idade", txtIdade.Text);
+
+                cmd.Parameters.AddWithValue(
+                    "@sexo",
+                    ((ComboBoxItem)cbSexo.SelectedItem).Content.ToString()
+                );
+
+                cmd.Parameters.AddWithValue(
+                    "@data",
+                    dtNascimento.SelectedDate
+                );
+
+                cmd.Parameters.AddWithValue("@raca", txtRaca.Text);
+                cmd.Parameters.AddWithValue("@telefone", txtTelefone.Text);
+                cmd.Parameters.AddWithValue("@endereco", txtEndereco.Text);
+
+                cmd.Parameters.AddWithValue(
+                    "@sangue",
+                    ((ComboBoxItem)cbSangue.SelectedItem).Content.ToString()
+                );
+
+                // médico logado (temporário)
+                cmd.Parameters.AddWithValue("@medico", 1);
+
+                cmd.ExecuteNonQuery();
+
+                conn.Close();
+
+                MessageBox.Show("Paciente cadastrado com sucesso!");
+
+                CadastroAnamnese tela = new CadastroAnamnese();
+                tela.Show();
+
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
     }
 }

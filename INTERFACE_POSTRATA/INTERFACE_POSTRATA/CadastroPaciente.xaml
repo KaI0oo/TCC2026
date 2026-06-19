@@ -104,7 +104,7 @@
                                     Height="45"
                                     FontSize="16"
                                     Background="#00BCD4"
-                                    Foreground="White"/>
+                                    Foreground="White" Click="Button_Click"/>
                             <Button Content="Menu Principal"
        
         Height="45"
