@@ -2,7 +2,7 @@ import pickle
 import pandas as pd
 import sys
 import os
-from IA_generator import gerar_modelo
+from IA_generator import gerar_modelo, gerar_metricas_avaliacao
 
 if not os.path.exists("./TCC2026_Prostata/IA/IA.pkl"):
     gerar_modelo()
@@ -14,10 +14,10 @@ caminho_modelo = os.path.join(pasta_atual, "IA.pkl")
 with open(caminho_modelo, "rb") as arquivo:
     modelo = pickle.load(arquivo)
 
-idade = float(sys.argv[1])
-psa_total = float(sys.argv[2])
-psa_livre = float(sys.argv[3])
-densidade = float(sys.argv[4])
+idade = 44#float(sys.argv[1])
+psa_total = 12.09#float(sys.argv[2])
+psa_livre = 2.45#float(sys.argv[3])
+densidade = 0.20#float(sys.argv[4])
 
 relacao_lt = psa_livre / psa_total
 
@@ -36,5 +36,7 @@ resultado = modelo.predict(entrada)[0]
 
 if resultado == 1:
     print("SUSPEITO")
+      # Probabilidade de ser SUSPEITO
 else:
     print("BENIGNO")
+gerar_metricas_avaliacao()
