@@ -42,7 +42,7 @@ namespace INTERFACE_POSTRATA
                 "Relação L/T: " +
                 ((livre / total) * 100).ToString("F2") +
                 "%";
-
+            
             txtClassificacao.Text = resultadoIA;
 
             if (resultadoIA == "SUSPEITO")

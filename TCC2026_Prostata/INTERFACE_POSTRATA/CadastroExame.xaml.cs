@@ -32,19 +32,9 @@ namespace INTERFACE_POSTRATA
 
             ProcessStartInfo psi = new ProcessStartInfo();
 
-            psi.FileName = @"C:\Users\kaioc\AppData\Local\Programs\Python\Python314\python.exe";
+            psi.FileName = @"C:\Users\Administrador\AppData\Local\Programs\Python\Python314\python.exe";
 
-
-            psi.Arguments = @"C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\executar_ia.py " +idade + " " +psaTotal + " " +psaLivre + " " +densidade;
-            psi.FileName =
-@"C:\Users\kaioc\AppData\Local\Programs\Python\Python314\python.exe";
-
-            psi.Arguments =
-@"C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\executar_ia.py " +
-idade + " " +
-psaTotal + " " +
-psaLivre + " " +
-densidade;
+            psi.Arguments = $@"C:\TCC2026\TCC2026_Prostata\IA\executar_ia.py {idade} {psaTotal} {psaLivre} {densidade}";
 
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
@@ -55,23 +45,24 @@ densidade;
 
             string saida = processo.StandardOutput.ReadToEnd();
             string erro = processo.StandardError.ReadToEnd();
+            processo.WaitForExit();
 
-            
+            if (!string.IsNullOrEmpty(erro))
+                System.Diagnostics.Debug.WriteLine("Erro Python: " + erro);
 
-            string resultadoIA = saida;
-
-            
+            string resultadoIA = saida.Trim();
 
             GerarLaudo tela = new GerarLaudo(
-    paciente,
-    idade,
-    medico,
-    crm,
-    psaTotal,
-    psaLivre,
-    densidade,
-    resultadoIA
-); tela.Show();
+                paciente,
+                idade,
+                medico,
+                crm,
+                psaTotal,
+                psaLivre,
+                densidade,
+                resultadoIA
+            );
+            tela.Show();
             this.Close();
         }
         private void VoltarMenu_Click(object sender, RoutedEventArgs e)

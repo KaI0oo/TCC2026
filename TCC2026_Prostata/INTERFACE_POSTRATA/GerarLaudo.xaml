@@ -22,7 +22,7 @@
 
                     <!-- TOPO -->
 
-                    <TextBlock Text="CLÍNICA "
+                    <TextBlock Text="CLÍNICA "/>
                     <TextBlock Text="CLÍNICA VIDA SAUDÁVEL"
                                FontSize="28"
                                FontWeight="Bold"
@@ -78,7 +78,7 @@
                     </Grid>
 
                     <!-- RESULTADOS -->
-
+            
                     <TextBlock Text="Resultados"
                                FontSize="22"
                                FontWeight="Bold"
@@ -146,7 +146,8 @@
                                    FontSize="22"
                                    FontWeight="Bold"
                                    Foreground="#C62828"
-                                   HorizontalAlignment="Center"/>
+                                   Text=""
+                                   HorizontalAlignment="Center" Width="175"/>
 
                     </Border>
 
