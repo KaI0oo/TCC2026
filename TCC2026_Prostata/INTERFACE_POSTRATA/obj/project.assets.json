@@ -291,24 +291,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\kaioc\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\Administrador\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
+      "projectUniqueName": "C:\\TCC2026\\TCC2026_Prostata\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
       "projectName": "INTERFACE_POSTRATA",
-      "projectPath": "C:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
-      "packagesPath": "C:\\Users\\kaioc\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\obj\\",
+      "projectPath": "C:\\TCC2026\\TCC2026_Prostata\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
+      "packagesPath": "C:\\Users\\Administrador\\.nuget\\packages\\",
+      "outputPath": "C:\\TCC2026\\TCC2026_Prostata\\INTERFACE_POSTRATA\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\kaioc\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Users\\Administrador\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -366,7 +361,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",

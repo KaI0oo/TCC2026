@@ -1,9 +1,0 @@
-# Ignorar as pastas de compilação do .NET em qualquer nível do projeto
-bin/
-obj/
-
-# Ignorar arquivos de configuração pessoal do Visual Studio / VS Code
-.vs/
-*.user
-*.suo
-/CURD.py

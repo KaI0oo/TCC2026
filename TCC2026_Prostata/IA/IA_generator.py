@@ -5,7 +5,7 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import classification_report, confusion_matrix
 import pickle
 
-df = pd.read_csv("./TCC2026_Prostata/IA/dados_psa_clinica.csv")
+df = pd.read_csv("C:\\TCC2026\\TCC2026_Prostata\\IA\\dados_psa_clinica.csv")
 X = df.drop('Resultado', axis=1)
 y = df['Resultado']
 

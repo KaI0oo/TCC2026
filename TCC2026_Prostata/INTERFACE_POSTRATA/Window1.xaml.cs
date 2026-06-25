@@ -25,7 +25,7 @@ namespace INTERFACE_POSTRATA
 
         // CADASTRO
 
-        }
+        
 
         private void CadastrarPaciente_Click(object sender, RoutedEventArgs e)
         {

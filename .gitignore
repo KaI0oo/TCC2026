@@ -6,4 +6,5 @@ obj/
 .vs/
 *.user
 *.suo
-/CURD.py
+*.ipynb
+*.png
