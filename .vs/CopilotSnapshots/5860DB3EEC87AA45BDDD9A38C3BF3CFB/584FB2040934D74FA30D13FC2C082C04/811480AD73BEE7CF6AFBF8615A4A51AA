@@ -1,0 +1,220 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using INTERFACE_POSTRATA.Banco;
+using System.Linq;
+using System.Text.RegularExpressions;
+using MySql.Data.MySqlClient;
+
+namespace INTERFACE_POSTRATA
+{
+    /// <summary>
+    /// Lógica interna para CadastroAnamnese.xaml
+    /// </summary>
+    public partial class CadastroAnamnese : Window
+    {
+        public CadastroAnamnese()
+        {
+            InitializeComponent();
+        }
+        // Permitir apenas dígitos (usado para dosagem, número, CEP, etc.)
+        private void DigitsOnly_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            e.Handled = !Regex.IsMatch(e.Text, "^[0-9]+$");
+        }
+
+        // Entrada de data DD/MM/AA para início/fim do tratamento
+        private void TxtData_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            if (!Regex.IsMatch(e.Text, "^[0-9]+$")) { e.Handled = true; return; }
+            e.Handled = false;
+        }
+
+        private void TxtData_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var tb = sender as TextBox;
+            if (tb == null) return;
+            string digits = new string((tb.Text ?? string.Empty).Where(char.IsDigit).ToArray());
+            string masked = string.Empty;
+            for (int i = 0; i < digits.Length && i < 6; i++)
+            {
+                masked += digits[i];
+                if (i == 1 || i == 3) masked += '/';
+            }
+            int sel = tb.SelectionStart;
+            tb.Text = masked;
+            tb.SelectionStart = Math.Min(masked.Length, sel);
+        }
+        private void ChkDoenca_Checked(object sender, RoutedEventArgs e)
+        {
+            txtDoencas.IsReadOnly = false;
+            txtDoencas.Background = System.Windows.Media.Brushes.White;
+        }
+
+        private void ChkDoenca_Unchecked(object sender, RoutedEventArgs e)
+        {
+            txtDoencas.IsReadOnly = true;
+            txtDoencas.Background = System.Windows.Media.Brushes.LightGray;
+            txtDoencas.Text = string.Empty;
+        }
+
+        private void ChkRemedio_Checked(object sender, RoutedEventArgs e)
+        {
+            txtRemedio.IsReadOnly = false;
+            txtRemedio.Background = System.Windows.Media.Brushes.White;
+            txtDosagem.IsReadOnly = false;
+            txtDosagem.Background = System.Windows.Media.Brushes.White;
+        }
+
+        private void ChkRemedio_Unchecked(object sender, RoutedEventArgs e)
+        {
+            txtRemedio.IsReadOnly = true;
+            txtRemedio.Background = System.Windows.Media.Brushes.LightGray;
+            txtRemedio.Text = string.Empty;
+            txtDosagem.IsReadOnly = true;
+            txtDosagem.Background = System.Windows.Media.Brushes.LightGray;
+            txtDosagem.Text = string.Empty;
+        }
+
+        private void CbTabagismo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selected = ((ComboBoxItem)cbTabagismo.SelectedItem)?.Content?.ToString() ?? string.Empty;
+            if (selected == "Sim" || selected == "Ex-consumidor")
+            {
+                txtFrequencia.IsReadOnly = false;
+                txtFrequencia.Background = System.Windows.Media.Brushes.White;
+            }
+            else
+            {
+                txtFrequencia.IsReadOnly = true;
+                txtFrequencia.Background = System.Windows.Media.Brushes.LightGray;
+                txtFrequencia.Text = string.Empty;
+            }
+        }
+
+        private void CbAlcool_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selected = ((ComboBoxItem)cbAlcool.SelectedItem)?.Content?.ToString() ?? string.Empty;
+            if (selected == "Sim" || selected == "Ex-consumidor")
+            {
+                txtFrequencia.IsReadOnly = false;
+                txtFrequencia.Background = System.Windows.Media.Brushes.White;
+            }
+            else
+            {
+                txtFrequencia.IsReadOnly = true;
+                txtFrequencia.Background = System.Windows.Media.Brushes.LightGray;
+                txtFrequencia.Text = string.Empty;
+            }
+        }
+
+        private DateTime? ParseShortDate(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return null;
+            string digits = new string((text ?? string.Empty).Where(char.IsDigit).ToArray());
+            if (digits.Length < 6) return null;
+            string dd = digits.Substring(0, 2);
+            string mm = digits.Substring(2, 2);
+            string aa = digits.Substring(4, 2);
+            if (!int.TryParse(dd, out int day) || !int.TryParse(mm, out int month) || !int.TryParse(aa, out int year2)) return null;
+            int yearFull = year2 + (year2 <= DateTime.Now.Year % 100 ? 2000 : 1900);
+            try { return new DateTime(yearFull, month, day); } catch { return null; }
+        }
+        private void VoltarMenu_Click(object sender, RoutedEventArgs e)
+        {
+            INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+            this.Close();
+        }
+
+        private void SalvarContinuar_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Validar via AnamneseValidator antes de inserir
+                DateTime? inicio = ParseShortDate(txtInicio.Text);
+                DateTime? fim = ParseShortDate(txtFim.Text);
+
+                var validation = Validators.AnamneseValidator.Validate(
+                    txtCPF.Text?.Trim(),
+                    txtRM.Text?.Trim(),
+                    chkDoenca.IsChecked == true,
+                    txtDoencas.Text,
+                    txtObservacoes.Text,
+                    chkRemedio.IsChecked == true,
+                    txtRemedio.Text,
+                    txtDosagem.Text,
+                    inicio,
+                    fim,
+                    ((ComboBoxItem)cbTabagismo.SelectedItem)?.Content?.ToString(),
+                    ((ComboBoxItem)cbAlcool.SelectedItem)?.Content?.ToString(),
+                    txtFrequencia.Text
+                );
+
+                if (!validation.IsValid)
+                {
+                    MessageBox.Show(validation.Message, "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                using (MySqlConnection conn = Conexao.ObterConexao())
+                {
+                    string sql = @"INSERT INTO anamnese
+                    (
+                        cpf_paciente,
+                        rm_medico,
+                        possui_doenca,
+                        doencas,
+                        observacoes,
+                        toma_remedio,
+                        remedio_nome,
+                        dosagem_mg,
+                        inicio_tratamento,
+                        fim_tratamento,
+                        tabagismo,
+                        alcool,
+                        frequencia
+                    ) VALUES (
+                        @cpf,@rm,@possui,@doencas,@obs,@remedio,@remedionome,@dosagem,@inicio,@fim,@tabagismo,@alcool,@frequencia
+                    );";
+
+                    using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@cpf", validation.Value.CpfPaciente);
+                        cmd.Parameters.AddWithValue("@rm", validation.Value.RmMedico.HasValue ? (object)validation.Value.RmMedico.Value : (object)string.Empty);
+                        cmd.Parameters.AddWithValue("@possui", validation.Value.PossuiDoenca ? 1 : 0);
+                        cmd.Parameters.AddWithValue("@doencas", validation.Value.Doencas);
+                        cmd.Parameters.AddWithValue("@obs", validation.Value.Observacoes);
+                        cmd.Parameters.AddWithValue("@remedio", validation.Value.TomaRemedio ? 1 : 0);
+                        cmd.Parameters.AddWithValue("@remedionome", validation.Value.RemedioNome);
+                        cmd.Parameters.AddWithValue("@dosagem", validation.Value.DosagemMg.HasValue ? (object)validation.Value.DosagemMg.Value : (object)System.DBNull.Value);
+                        cmd.Parameters.AddWithValue("@inicio", validation.Value.InicioTratamento ?? (object)System.DBNull.Value);
+                        cmd.Parameters.AddWithValue("@fim", validation.Value.FimTratamento ?? (object)System.DBNull.Value);
+                        cmd.Parameters.AddWithValue("@tabagismo", validation.Value.Tabagismo);
+                        cmd.Parameters.AddWithValue("@alcool", validation.Value.Alcool);
+                        cmd.Parameters.AddWithValue("@frequencia", validation.Value.Frequencia);
+
+                        try { cmd.ExecuteNonQuery(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Erro ao inserir anamnese: {ex.Message}"); }
+                    }
+                }
+
+                // Avançar para próxima tela (se houver)
+                MessageBox.Show("Anamnese salva com sucesso.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+                INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao salvar anamnese: {ex.Message}");
+            }
+        }
+
+    }
+}

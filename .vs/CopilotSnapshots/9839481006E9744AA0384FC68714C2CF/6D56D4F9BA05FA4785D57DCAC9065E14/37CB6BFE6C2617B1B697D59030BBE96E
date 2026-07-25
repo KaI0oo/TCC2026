@@ -1,0 +1,401 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using System.Diagnostics;
+using INTERFACE_POSTRATA.Banco;
+using MySql.Data.MySqlClient;
+namespace INTERFACE_POSTRATA
+{
+    public partial class CadastroExame : Window
+    {
+        public CadastroExame()
+        {
+            InitializeComponent();
+        }
+
+        private void LimparCampos_Click(object sender, RoutedEventArgs e)
+        {
+            txtCPF.Text = string.Empty;
+            txtRM.Text = string.Empty;
+            txtIdade.Text = string.Empty;
+            txtPSATotal.Text = string.Empty;
+            txtPSALivre.Text = string.Empty;
+            txtDensidade.Text = string.Empty;
+            txtPDFSelecionado.Text = "Nenhum PDF selecionado";
+            txtPSAEncontrado.Text = "--";
+            dtExame.SelectedDate = null;
+            // Garantir que o botão de confirmar esteja desabilitado ao limpar
+            try { btnConfirmarPSA.IsEnabled = false; } catch { }
+        }
+
+        private void ConfirmarPSA_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var valor = txtPSAEncontrado.Text?.Trim();
+                if (!string.IsNullOrEmpty(valor) && valor != "--")
+                {
+                    txtPSATotal.Text = valor.Replace('.', ',');
+                    btnConfirmarPSA.IsEnabled = false;
+                    MessageBox.Show("PSA confirmado e preenchido no campo PSA Total.", "Confirmado", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Nenhum valor de PSA válido para confirmar.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao confirmar PSA: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SelecionarPDF_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var ofd = new Microsoft.Win32.OpenFileDialog();
+                ofd.Filter = "PDF files (*.pdf)|*.pdf";
+                bool? result = ofd.ShowDialog();
+                if (result == true)
+                {
+                    string caminho = ofd.FileName;
+                    txtPDFSelecionado.Text = System.IO.Path.GetFileName(caminho);
+
+                    // Executar script Python para tentar extrair PSA do PDF
+                    // Usar extração .NET (PdfPig) embutida - não depende de Python
+                    try
+                    {
+                        string valor = PdfExtractor.ExtrairPSA(caminho);
+                        if (!string.IsNullOrEmpty(valor))
+                        {
+                            txtPSAEncontrado.Text = valor;
+                            // Habilitar botão de confirmação para que médico confirme antes de preencher
+                            btnConfirmarPSA.IsEnabled = true;
+                        }
+                        else
+                        {
+                            txtPSAEncontrado.Text = "--";
+                            btnConfirmarPSA.IsEnabled = false;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Erro ao extrair PSA do PDF: {ex.Message}");
+                        txtPSAEncontrado.Text = "--";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao selecionar PDF: {ex.Message}");
+            }
+        }
+
+        private void GerarLaudo_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Dados do paciente (você pode querer buscar do banco de dados)
+                string paciente = "Paciente Teste";
+                string medico = "Dr. Carlos Henrique";
+                string crm = "CRM 123456";
+
+                // Coletar e normalizar os dados de entrada
+                string idadeRaw = txtIdade.Text.Trim();
+                string psaTotalRaw = txtPSATotal.Text.Trim();
+                string psaLivreRaw = txtPSALivre.Text.Trim();
+                string densidadeRaw = txtDensidade.Text.Trim();
+
+                // Validar campos antes de chamar a IA
+                if (string.IsNullOrEmpty(idadeRaw) || string.IsNullOrEmpty(psaTotalRaw) ||
+                    string.IsNullOrEmpty(psaLivreRaw) || string.IsNullOrEmpty(densidadeRaw))
+                {
+                    MessageBox.Show("Por favor, preencha todos os campos antes de gerar o laudo.", "Campos Obrigatórios", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Normalizar e validar números (aceita "," ou ".")
+                string idade = NormalizarNumero(idadeRaw);
+                string psaTotal = NormalizarNumero(psaTotalRaw);
+                string psaLivre = NormalizarNumero(psaLivreRaw);
+                string densidade = NormalizarNumero(densidadeRaw);
+
+                // Verificar se a normalização foi bem-sucedida
+                if (idade == null || psaTotal == null || psaLivre == null || densidade == null)
+                {
+                    MessageBox.Show("Um ou mais campos contêm valores inválidos. Por favor, insira números válidos (use . ou , para decimais).", "Erro de Formato", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Obter diretório do executável
+                string dirExecavel = AppDomain.CurrentDomain.BaseDirectory;
+
+                // Procurar pelo script executar_ia.py em múltiplos locais
+                string caminhoScriptIA = null;
+
+                // Tentar em múltiplos caminhos (estrutura: bin\Debug\net10.0-windows\)
+                string[] caminhosPossiveis = new[]
+                {
+                    System.IO.Path.Combine(dirExecavel, "..", "..", "..", "..", "executar_ia.py"),  // ../../../../ (sai de net10.0-windows/Debug/bin/INTERFACE_POSTRATA) para raiz
+                    System.IO.Path.Combine(dirExecavel, "..", "..", "..", "executar_ia.py"),       // ../../../ (sai de net10.0-windows/Debug/bin)
+                    System.IO.Path.Combine(dirExecavel, "..", "..", "executar_ia.py"),             // ../../ (sai de Debug/bin)
+                    System.IO.Path.Combine(dirExecavel, "..", "executar_ia.py"),                   // ../ (sai de bin)
+                    System.IO.Path.Combine(dirExecavel, "executar_ia.py")                          // direto em BaseDirectory
+                };
+
+                foreach (var caminho in caminhosPossiveis)
+                {
+                    string caminhoCompleto = System.IO.Path.GetFullPath(caminho);
+                    if (System.IO.File.Exists(caminhoCompleto))
+                    {
+                        caminhoScriptIA = caminhoCompleto;
+                        break;
+                    }
+                }
+
+                // Verificar se o script foi encontrado
+                if (string.IsNullOrEmpty(caminhoScriptIA))
+                {
+                    string mensagemErro = $"Arquivo executar_ia.py não encontrado.\n\nProcurou em:\n" +
+                        string.Join("\n", caminhosPossiveis.Select(p => System.IO.Path.GetFullPath(p)));
+                    MessageBox.Show(mensagemErro, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Encontrar Python instalado
+                string pythonExe = EncontrarPython();
+                if (string.IsNullOrEmpty(pythonExe))
+                {
+                    MessageBox.Show("Python não foi encontrado no sistema. Certifique-se de tê-lo instalado.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Debug: Exibir dados sendo enviados para a IA
+                string debugMsg = $"Dados enviados para a IA:\n" +
+                                 $"Idade: {idade}\n" +
+                                 $"PSA Total: {psaTotal}\n" +
+                                 $"PSA Livre: {psaLivre}\n" +
+                                 $"Densidade: {densidade}\n\n" +
+                                 $"Relação L/T calculada pela IA: {psaLivre} / {psaTotal}";
+
+                System.Diagnostics.Debug.WriteLine(debugMsg);
+
+                // Configurar processo
+                ProcessStartInfo psi = new ProcessStartInfo();
+                psi.FileName = pythonExe;
+                psi.Arguments = $"\"{caminhoScriptIA}\" {idade} {psaTotal} {psaLivre} {densidade}";
+                psi.RedirectStandardOutput = true;
+                psi.RedirectStandardError = true;
+                psi.UseShellExecute = false;
+                psi.CreateNoWindow = true;
+
+                // Debug: Exibir comando sendo executado
+                System.Diagnostics.Debug.WriteLine($"Comando: {pythonExe} {psi.Arguments}");
+
+                // Executar IA
+                Process processo = Process.Start(psi);
+                processo.WaitForExit();
+
+                string saida = processo.StandardOutput.ReadToEnd().Trim();
+                string erro = processo.StandardError.ReadToEnd().Trim();
+
+                // Debug: Exibir saída da IA
+                System.Diagnostics.Debug.WriteLine($"Saída da IA: {saida}");
+                System.Diagnostics.Debug.WriteLine($"Erro da IA: {erro}");
+
+                // Tratar resultado
+                string resultadoIA = string.Empty;
+
+                if (!string.IsNullOrEmpty(erro))
+                {
+                    MessageBox.Show($"Erro ao executar a IA:\n{erro}", "Erro de Execução", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                if (!string.IsNullOrEmpty(saida))
+                {
+                    resultadoIA = saida.ToUpper().Trim();
+                    // Validar resultado
+                    if (resultadoIA != "SUSPEITO" && resultadoIA != "BENIGNO")
+                    {
+                        MessageBox.Show($"Resultado inesperado da IA: {resultadoIA}\nUsando valor padrão: BENIGNO", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        resultadoIA = "BENIGNO"; // valor padrão
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("A IA não retornou um resultado. Usando valor padrão: BENIGNO", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    resultadoIA = "BENIGNO"; // valor padrão
+                }
+
+                // Tentar salvar exame no banco (se houver tabela 'exame')
+                try
+                {
+                    using (MySqlConnection conn = Conexao.ObterConexao())
+                    {
+                        string sqlInsert = @"INSERT INTO exame
+                        (
+                            paciente_nome,
+                            idade,
+                            medico,
+                            crm,
+                            psa_total,
+                            psa_livre,
+                            densidade,
+                            resultado,
+                            data_exame
+                        )
+                        VALUES
+                        (
+                            @paciente,
+                            @idade,
+                            @medico,
+                            @crm,
+                            @psa_total,
+                            @psa_livre,
+                            @densidade,
+                            @resultado,
+                            @data_exame
+                        );";
+
+                        using (MySqlCommand cmd = new MySqlCommand(sqlInsert, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@paciente", paciente ?? string.Empty);
+                            cmd.Parameters.AddWithValue("@idade", idade);
+                            cmd.Parameters.AddWithValue("@medico", medico ?? string.Empty);
+                            cmd.Parameters.AddWithValue("@crm", crm ?? string.Empty);
+                            cmd.Parameters.AddWithValue("@psa_total", Convert.ToDouble(psaTotal, System.Globalization.CultureInfo.InvariantCulture));
+                            cmd.Parameters.AddWithValue("@psa_livre", Convert.ToDouble(psaLivre, System.Globalization.CultureInfo.InvariantCulture));
+                            cmd.Parameters.AddWithValue("@densidade", Convert.ToDouble(densidade, System.Globalization.CultureInfo.InvariantCulture));
+                            cmd.Parameters.AddWithValue("@resultado", resultadoIA);
+                            cmd.Parameters.AddWithValue("@data_exame", DateTime.Now);
+
+                            try { cmd.ExecuteNonQuery(); } catch (Exception exDb) { System.Diagnostics.Debug.WriteLine($"Erro ao inserir exame: {exDb.Message}"); }
+                        }
+
+                        conn.Close();
+                    }
+                }
+                catch (Exception exConn)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Erro ao conectar ao banco: {exConn.Message}");
+                }
+
+                // Abrir tela de laudo
+                GerarLaudo tela = new GerarLaudo(
+                    paciente,
+                    idade,
+                    medico,
+                    crm,
+                    psaTotal,
+                    psaLivre,
+                    densidade,
+                    resultadoIA
+                );
+                tela.Show();
+                INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao gerar laudo:\n{ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private string EncontrarPython()
+        {
+            // Procurar Python no PATH
+            string pythonExe = "python";
+
+            try
+            {
+                // Tentar usar 'where python' no Windows
+                ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", "/c where python")
+                {
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                Process p = Process.Start(psi);
+                string resultado = p.StandardOutput.ReadToEnd().Trim();
+
+                if (!string.IsNullOrEmpty(resultado))
+                {
+                    return resultado.Split(new[] { Environment.NewLine }, StringSplitOptions.None)[0];
+                }
+            }
+            catch { }
+
+            // Caminhos comuns onde Python pode estar
+            string[] caminhosPython = new[]
+            {
+                @"C:\Python311\python.exe",
+                @"C:\Python310\python.exe",
+                @"C:\Python312\python.exe",
+                @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python\Python311\python.exe",
+                @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python\Python310\python.exe",
+                @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python\Python312\python.exe",
+                @"C:\Program Files\Python311\python.exe",
+                @"C:\Program Files\Python310\python.exe",
+                @"C:\Program Files\Python312\python.exe"
+            };
+
+            foreach (string caminho in caminhosPython)
+            {
+                if (System.IO.File.Exists(caminho))
+                {
+                    return caminho;
+                }
+            }
+
+            return pythonExe; // retorna "python" como fallback
+        }
+
+        /// <summary>
+        /// Normaliza um número aceito "," ou "." como separador decimal
+        /// Retorna o número formatado com "." (ponto) para uso em Python
+        /// Se inválido, retorna null
+        /// </summary>
+        private string NormalizarNumero(string numero)
+        {
+            try
+            {
+                // Remover espaços
+                numero = numero.Trim();
+
+                // Aceitar "," ou "." como separador decimal
+                numero = numero.Replace(",", ".");
+
+                // Validar se é um número válido
+                if (double.TryParse(numero, System.Globalization.NumberStyles.Float, 
+                    System.Globalization.CultureInfo.InvariantCulture, out double valor))
+                {
+                    // Retornar o valor como string já normalizado com ponto
+                    // Não usar TrimEnd para não perder zeros significativos
+                    return numero;
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void VoltarMenu_Click(object sender, RoutedEventArgs e)
+        {
+            new Window1().Show();
+            this.Close();
+        }
+    }
+}

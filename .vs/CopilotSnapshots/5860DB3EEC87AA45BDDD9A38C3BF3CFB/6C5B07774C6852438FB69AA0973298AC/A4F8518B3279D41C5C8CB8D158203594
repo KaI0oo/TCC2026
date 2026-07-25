@@ -1,0 +1,81 @@
+﻿using System;
+using System.IO;
+using System.Text.Json;
+using MySql.Data.MySqlClient;
+
+namespace INTERFACE_POSTRATA.Banco
+{
+    // Mantida compatibilidade: classe interna com método estático para obter conexão
+    class Conexao
+    {
+        // Chave esperada no arquivo de configuração (appsettings.json):
+        // {
+        //   "ConnectionStrings": { "Default": "server=...;database=...;user=...;password=...;" }
+        // }
+        private const string ConfigFileName = "appsettings.json";
+        private const string ConnectionStringKey = "ConnectionStrings:Default";
+
+        public static MySqlConnection ObterConexao()
+        {
+            // Tenta carregar a string de conexão da configuração; se não existir, usa valor padrão
+            string conexao = LoadConnectionStringFromConfig() ??
+                             "server=localhost;database=Postrata;user=root;password=;";
+
+            // Constrói o connection string de forma segura e garante opções desejadas
+            var builder = new MySqlConnectionStringBuilder(conexao)
+            {
+                // Timeout de conexão em segundos
+                ConnectionTimeout = 30,
+                // Força charset utf8mb4
+                CharacterSet = "utf8mb4",
+                // Define explicitamente o modo SSL (ajuste conforme seu ambiente)
+                SslMode = MySqlSslMode.None
+            };
+
+            var conn = new MySqlConnection(builder.ConnectionString);
+
+            try
+            {
+                conn.Open();
+                return conn;
+            }
+            catch (Exception ex)
+            {
+                // Lança exceção com contexto preservando stack original
+                throw new InvalidOperationException("Erro ao abrir conexão com o banco de dados.", ex);
+            }
+        }
+
+        private static string? LoadConnectionStringFromConfig()
+        {
+            try
+            {
+                string basePath = AppContext.BaseDirectory ?? Environment.CurrentDirectory;
+                string path = Path.Combine(basePath, ConfigFileName);
+
+                if (!File.Exists(path))
+                {
+                    // tenta também diretório do projeto (caso rode dentro do Visual Studio)
+                    path = Path.Combine(Environment.CurrentDirectory, ConfigFileName);
+                    if (!File.Exists(path))
+                        return null;
+                }
+
+                using var stream = File.OpenRead(path);
+                using var doc = JsonDocument.Parse(stream);
+
+                if (doc.RootElement.TryGetProperty("ConnectionStrings", out var connStrings) &&
+                    connStrings.TryGetProperty("Default", out var defaultConn))
+                {
+                    return defaultConn.GetString();
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Erro ao carregar o arquivo de configuração.", ex);
+            }
+        }
+    }
+}

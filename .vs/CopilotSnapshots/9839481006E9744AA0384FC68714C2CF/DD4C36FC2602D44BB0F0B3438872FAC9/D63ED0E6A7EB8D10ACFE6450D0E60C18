@@ -1,0 +1,65 @@
+﻿using System;
+using System.Data;
+using System.Windows;
+using System.Windows.Controls;
+using INTERFACE_POSTRATA.Banco;
+using MySql.Data.MySqlClient;
+
+namespace INTERFACE_POSTRATA
+{
+    public partial class ListarExames : Window
+    {
+        public ListarExames()
+        {
+            InitializeComponent();
+            CarregarExames();
+        }
+
+        private void CarregarExames(string cpf = null)
+        {
+            try
+            {
+                using (MySqlConnection conn = Conexao.ObterConexao())
+                {
+                    string sql = "SELECT id, paciente_nome, idade, psa_total, psa_livre, densidade, resultado, data_exame FROM exame";
+                    if (!string.IsNullOrEmpty(cpf)) sql += " WHERE cpf_paciente = @cpf";
+
+                    using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                    {
+                        if (!string.IsNullOrEmpty(cpf)) cmd.Parameters.AddWithValue("@cpf", cpf);
+
+                        using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
+                        {
+                            DataTable dt = new DataTable();
+                            adapter.Fill(dt);
+                            dgExames.ItemsSource = dt.DefaultView;
+                        }
+                    }
+
+                    conn.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao carregar exames: {ex.Message}");
+            }
+        }
+
+        private void BtnPesquisar_Click(object sender, RoutedEventArgs e)
+        {
+            CarregarExames(txtPesquisa.Text.Trim());
+        }
+
+        private void BtnTodos_Click(object sender, RoutedEventArgs e)
+        {
+            txtPesquisa.Text = string.Empty;
+            CarregarExames();
+        }
+
+        private void BtnVoltar_Click(object sender, RoutedEventArgs e)
+        {
+            INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+            this.Close();
+        }
+    }
+}

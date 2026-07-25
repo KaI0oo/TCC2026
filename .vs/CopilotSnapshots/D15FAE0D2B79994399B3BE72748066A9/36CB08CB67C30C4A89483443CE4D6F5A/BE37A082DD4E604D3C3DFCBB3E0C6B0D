@@ -1,0 +1,166 @@
+﻿<Window x:Class="INTERFACE_POSTRATA.Window1"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:INTERFACE_POSTRATA"
+        mc:Ignorable="d"
+        Title="Sistema Clínica"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize">
+
+    <Grid Background="#F4FDFD">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="95"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <!-- TOPO -->
+        <Border Grid.Row="0" Background="#0097A7">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="320"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="320"/>
+                </Grid.ColumnDefinitions>
+                <!-- FOTO + MÉDICO -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0,0,0">
+                    <Border Width="65" Height="65" BorderBrush="White" BorderThickness="2">
+                        <Image Stretch="Fill"/>
+                    </Border>
+                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Dr. João Silva" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                        <TextBlock Text="CRM 123456" FontSize="15" Foreground="#E0F7FA"/>
+                    </StackPanel>
+                </StackPanel>
+                <!-- TÍTULO -->
+                <TextBlock Grid.Column="1" Text="Sistema de Laudos Médicos" FontSize="30" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <!-- USUÁRIO -->
+                <TextBlock Grid.Column="2" Text="Bem-vindo, Dr. João" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0"/>
+            </Grid>
+        </Border>
+        <!-- CONTEÚDO -->
+        <Grid Grid.Row="1"
+      Margin="10">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="7*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- MENU LATERAL -->
+
+            <Border Grid.Column="0"
+            Background="White"
+            BorderBrush="#DADADA"
+            BorderThickness="1">
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+
+                    <TreeView BorderThickness="0"
+                      Background="White"
+                      FontSize="26">
+
+                        <!-- CADASTRO -->
+
+                        <TreeViewItem Header="Cadastro"
+                              IsExpanded="True">
+
+                            <TreeViewItem Header="Cadastrar Paciente"
+                                  Selected="CadastrarPaciente_Click"/>
+
+                            <TreeViewItem Header="Cadastrar Anamnese"
+                                  Selected="CadastrarAnamnese_Click"/>
+
+                            <TreeViewItem Header="Cadastrar Exame"
+                                  Selected="CadastrarExame_Click"/>
+
+                        </TreeViewItem>
+
+                        <!-- LAUDOS -->
+
+                        <TreeViewItem Header="Laudos"
+                              IsExpanded="True">
+
+                            <TreeViewItem Header="Gerar Laudo"
+                                  Selected="GerarLaudo_Click"/>
+
+                        </TreeViewItem>
+                        <!-- IA -->
+
+                        <TreeViewItem Header="IA"
+              IsExpanded="True">
+
+                            <TreeViewItem Header="Treinar IA"
+                  Selected="TreinarIA_Click"/>
+
+                        </TreeViewItem>
+                        <!-- CONSULTAS -->
+
+                        <TreeViewItem Header="Consultas"
+                              IsExpanded="True">
+
+                            <TreeViewItem Header="Tudo" Selected="ConsultarTudo_Click"/>
+                            <TreeViewItem Header="Paciente" Selected="ConsultarPaciente_Click"/>
+                            <TreeViewItem Header="Exames" Selected="ConsultarExames_Click"/>
+                            <TreeViewItem Header="Laudos" Selected="ConsultarLaudos_Click"/>
+
+                        </TreeViewItem>
+
+                        <!-- CONTA -->
+
+                        <TreeViewItem Header="Conta"
+                              IsExpanded="True">
+
+                            <TreeViewItem Header="Logout"
+                                  Selected="Logout_Click"/>
+
+                            <TreeViewItem Header="Sair"
+                                  Selected="Sair_Click"/>
+
+                        </TreeViewItem>
+
+                    </TreeView>
+
+                </ScrollViewer>
+
+            </Border>
+
+            <!-- PAINEL PRINCIPAL -->
+
+            <Border Grid.Column="1"
+            Margin="10,0,0,0"
+            Background="White"
+            BorderBrush="#4F86FF"
+            BorderThickness="2">
+
+                <Grid>
+
+                    <Label Content="Painel Principal"
+                   FontSize="32"
+                   FontWeight="Bold"
+                   Foreground="#006064"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Top"
+                   Margin="0,25,0,0"/>
+
+                    <StackPanel Margin="30,100,30,30">
+
+                        <TextBlock Text="Bem-vindo ao sistema da clínica."
+                           FontSize="20"
+                           FontWeight="SemiBold"/>
+
+                        <TextBlock Text="Selecione uma opção no menu ao lado para iniciar."
+                           FontSize="20"
+                           Foreground="Gray"
+                           Margin="0,15,0,0"/>
+
+                    </StackPanel>
+
+                </Grid>
+
+            </Border>
+
+        </Grid>
+    </Grid>
+</Window>

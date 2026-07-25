@@ -1,0 +1,236 @@
+﻿<Window x:Class="INTERFACE_POSTRATA.CadastroAnamnese"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:INTERFACE_POSTRATA"
+        mc:Ignorable="d"
+        Title="Cadastro Anamnese"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize">
+
+    <Grid Background="#F4FDFD">
+
+        <Viewbox Stretch="Uniform">
+
+            <Grid Width="1920"
+                  Height="1080"
+                  Background="#F4FDFD">
+
+                <!-- TOPO -->
+
+                <Border Background="#00BCD4"
+                        Height="70"
+                        VerticalAlignment="Top">
+
+                    <Label Content="Cadastro de Anamnese"
+                           Foreground="White"
+                           FontSize="28"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+
+                </Border>
+
+                <!-- AREA FORMULARIO -->
+
+                <Border Background="White"
+                        Margin="30,100,30,30"
+                        CornerRadius="10">
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+
+                        <StackPanel Margin="30">
+
+                            <!-- PACIENTE -->
+
+                            <TextBlock Text="CPF do Paciente"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"/>
+
+                            <TextBox x:Name="txtCPF"
+                                     Height="35"
+                                     FontSize="18"
+                                     Margin="0,5,0,15"/>
+
+                            <!-- MEDICO -->
+
+                            <TextBlock Text="RM do Médico"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"/>
+
+                            <TextBox x:Name="txtRM"
+                                     Height="35"
+                                     FontSize="18"
+                                     Margin="0,5,0,15"/>
+
+                            <!-- DOENCA -->
+
+                            <CheckBox x:Name="chkDoenca"
+                                      Content="Possui Doença"
+                                      FontSize="15"
+                                      Margin="0,10,0,10"/>
+
+                            <TextBlock Text="Quais Doenças?"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"/>
+
+                            <TextBox x:Name="txtDoencas"
+                                     Height="80"
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="True"
+                                     FontSize="18"
+                                     Margin="0,5,0,15"/>
+
+                            <!-- OBSERVACOES -->
+
+                            <TextBlock Text="Observações"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"/>
+
+                            <TextBox x:Name="txtObservacoes"
+                                     Height="100"
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="True"
+                                     FontSize="18"
+                                     Margin="0,5,0,15"/>
+
+                            <!-- REMEDIOS -->
+
+                            <CheckBox x:Name="chkRemedio"
+                                      Content="Toma Remédio"
+                                      FontSize="15"
+                                      Margin="0,10,0,10"/>
+
+                            <TextBlock Text="Nome do Remédio"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"/>
+
+                            <TextBox x:Name="txtRemedio"
+                                     Height="35"
+                                     FontSize="18"
+                                     Margin="0,5,0,15"/>
+
+                            <TextBlock Text="Dosagem (mg)"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"/>
+
+                            <TextBox x:Name="txtDosagem"
+                                     Height="35"
+                                     FontSize="18"
+                                     Margin="0,5,0,15"/>
+
+                            <!-- DATAS -->
+
+                            <Grid Margin="0,10,0,15">
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+
+                                    <TextBlock Text="Início do Tratamento"
+                                               FontSize="20"
+                                               FontWeight="SemiBold"/>
+
+                                    <DatePicker x:Name="dtInicio"
+                                                Height="35"
+                                                FontSize="20"
+                                                Margin="0,5,0,0"/>
+
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+
+                                    <TextBlock Text="Fim do Tratamento"
+                                               FontSize="20"
+                                               FontWeight="SemiBold"/>
+
+                                    <DatePicker x:Name="dtFim"
+                                                Height="35"
+                                                FontSize="20"
+                                                Margin="0,5,0,0"/>
+
+                                </StackPanel>
+
+                            </Grid>
+
+                            <!-- TABAGISMO -->
+
+                            <TextBlock Text="Tabagismo"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"/>
+
+                            <ComboBox x:Name="cbTabagismo"
+                                      Height="35"
+                                      Margin="0,5,0,15">
+
+                                <ComboBoxItem Content="ATUAL"/>
+                                <ComboBoxItem Content="EX-FUMANTE"/>
+                                <ComboBoxItem Content="NUNCA"/>
+
+                            </ComboBox>
+
+                            <!-- ALCOOL -->
+
+                            <TextBlock Text="Consumo de Álcool"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"/>
+
+                            <ComboBox x:Name="cbAlcool"
+                                      Height="35"
+                                      Margin="0,5,0,15">
+
+                                <ComboBoxItem Content="BEBE"/>
+                                <ComboBoxItem Content="EX-BEBEDOR"/>
+                                <ComboBoxItem Content="NUNCA"/>
+
+                            </ComboBox>
+
+                            <!-- FREQUENCIA -->
+
+                            <TextBlock Text="Frequência de Bebida"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"/>
+
+                            <TextBox x:Name="txtFrequencia"
+                                     Height="35"
+                                     FontSize="18"
+                                     Margin="0,5,0,25"/>
+
+                            <!-- BOTAO -->
+
+                            <Button Content="Salvar e Continuar"
+                                    Height="45"
+                                    FontSize="16"
+                                    FontWeight="Bold"
+                                    Background="#00BCD4"
+                                    Foreground="White"
+                                    Click="SalvarContinuar_Click"/>
+                            <Button Content="Menu Principal"
+                                    
+                                    Height="45"
+                                    Margin="0,15,0,0"
+                                    FontSize="16"
+                                    FontWeight="Bold"
+                                    Background="#00838F"
+                                    Foreground="White"
+                                   
+                                    Click="VoltarMenu_Click"/>      
+                        </StackPanel>
+
+                    </ScrollViewer>
+
+                </Border>
+
+            </Grid>
+
+        </Viewbox>
+
+    </Grid>
+
+</Window>

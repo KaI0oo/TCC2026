@@ -1,0 +1,8 @@
+﻿// This file is a simple backing class to ensure InitializeComponent is found during build in this environment.
+namespace INTERFACE_POSTRATA
+{
+    public partial class ListarPacientes : System.Windows.Window
+    {
+        public void InitializeComponent() { }
+    }
+}

@@ -1,0 +1,219 @@
+﻿using System.Windows;
+using INTERFACE_POSTRATA.Banco;
+using MySql.Data.MySqlClient;
+namespace INTERFACE_POSTRATA
+{
+    public partial class Window1 : Window
+    {
+        public Window1()
+        {
+            InitializeComponent();
+            try
+            {
+                MySqlConnection conn = Conexao.ObterConexao();
+
+                //MessageBox.Show("Banco conectado!");
+
+                conn.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        // CADASTRO
+
+        private void CadastrarPaciente_Click(object sender, RoutedEventArgs e)
+        {
+            new CadastroPaciente().Show();
+        }
+
+        private void CadastrarAnamnese_Click(object sender, RoutedEventArgs e)
+        {
+            new CadastroAnamnese().Show();
+        }
+
+        private void CadastrarExame_Click(object sender, RoutedEventArgs e)
+        {
+            new CadastroExame().Show();
+        }
+
+        // LAUDOS
+
+        private void GerarLaudo_Click(object sender, RoutedEventArgs e)
+        {
+            CadastroExame tela = new CadastroExame();
+            tela.Show();
+            this.Close();
+        }
+
+        // CONSULTAS - PACIENTES
+
+        private void BuscarPaciente_Click(object sender, RoutedEventArgs e)
+        {
+            // Abrir diálogo para digitar CPF e mostrar apenas esse paciente
+            var input = new InputDialog();
+            input.Owner = this;
+            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
+            {
+                var ctrl = new ListarPacientesControl();
+                ctrl.CarregarPacientes(input.Valor);
+                SetMainContent(ctrl);
+            }
+        }
+
+        private void BuscarTodosPacientes_Click(object sender, RoutedEventArgs e)
+        {
+            SetMainContent(new ListarPacientesControl());
+        }
+
+        // CONSULTAS - EXAMES
+
+        private void BuscarExamePaciente_Click(object sender, RoutedEventArgs e)
+        {
+            var input = new InputDialog();
+            input.Owner = this;
+            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
+            {
+                var ctrl = new ListarExamesControl();
+                ctrl.CarregarExames(input.Valor);
+                SetMainContent(ctrl);
+            }
+        }
+
+        private void BuscarTodosExames_Click(object sender, RoutedEventArgs e)
+        {
+            SetMainContent(new ListarExamesControl());
+        }
+
+        private void BuscarTodosExamesPaciente_Click(object sender, RoutedEventArgs e)
+        {
+            var input = new InputDialog();
+            input.Owner = this;
+            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
+            {
+                var ctrl = new ListarExamesControl();
+                ctrl.CarregarExames(input.Valor);
+                SetMainContent(ctrl);
+            }
+        }
+
+        private void ListarExames_Click(object sender, RoutedEventArgs e)
+        {
+            SetMainContent(new ListarExamesControl());
+        }
+        private void TreinarIA_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Tela de treinamento da IA ainda não criada.");
+        }
+        // CONSULTAS - LAUDOS
+
+        private void BuscarLaudoPaciente_Click(object sender, RoutedEventArgs e)
+        {
+            var input = new InputDialog();
+            input.Owner = this;
+            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
+            {
+                var ctrl = new ListarLaudosControl();
+                ctrl.CarregarLaudos(input.Valor);
+                SetMainContent(ctrl);
+            }
+        }
+
+        private void BuscarTodosLaudosPaciente_Click(object sender, RoutedEventArgs e)
+        {
+            var input = new InputDialog();
+            input.Owner = this;
+            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
+            {
+                var ctrl = new ListarLaudosControl();
+                ctrl.CarregarLaudos(input.Valor);
+                SetMainContent(ctrl);
+            }
+        }
+
+        private void BuscarTodosLaudos_Click(object sender, RoutedEventArgs e)
+        {
+            SetMainContent(new ListarLaudosControl());
+        }
+
+        // CONTA
+
+        private void Logout_Click(object sender, RoutedEventArgs e)
+        {
+            // Evitar múltiplas janelas MainWindow
+            INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+            this.Close();
+        }
+
+        private void Sair_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        // Métodos públicos para manipular o conteúdo do painel principal
+        public void SetMainContent(System.Windows.UIElement element)
+        {
+            var contentControl = this.FindName("MainContent") as System.Windows.Controls.ContentControl;
+            if (contentControl != null)
+            {
+                contentControl.Content = element;
+            }
+        }
+
+        public void ClearMainContent()
+        {
+            var contentControl = this.FindName("MainContent") as System.Windows.Controls.ContentControl;
+            if (contentControl != null)
+            {
+                contentControl.Content = null;
+            }
+        }
+
+        // NOVOS HANDLERS: exibir conteúdo no painel principal
+        private void ConsultarTudo_Click(object sender, RoutedEventArgs e)
+        {
+            // Mostrar pacientes e exames lado a lado
+            var grid = new System.Windows.Controls.Grid();
+            grid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star) });
+
+            var pacientesCtrl = new ListarPacientesControl();
+            System.Windows.Controls.Grid.SetColumn(pacientesCtrl, 0);
+            grid.Children.Add(pacientesCtrl);
+
+            var examesCtrl = new ListarExamesControl();
+            System.Windows.Controls.Grid.SetColumn(examesCtrl, 1);
+            grid.Children.Add(examesCtrl);
+
+            SetMainContent(grid);
+        }
+
+        private void ConsultarPaciente_Click(object sender, RoutedEventArgs e)
+        {
+            SetMainContent(new ListarPacientesControl());
+        }
+
+        private void ConsultarExames_Click(object sender, RoutedEventArgs e)
+        {
+            SetMainContent(new ListarExamesControl());
+        }
+
+        private void ConsultarLaudos_Click(object sender, RoutedEventArgs e)
+        {
+            SetMainContent(new System.Windows.Controls.TextBlock { Text = "Funcionalidade de laudos ainda não implementada.", FontSize = 20, Margin = new System.Windows.Thickness(20) });
+        }
+
+
+
+
+
+
+
+
+
+
+
+    }
+}

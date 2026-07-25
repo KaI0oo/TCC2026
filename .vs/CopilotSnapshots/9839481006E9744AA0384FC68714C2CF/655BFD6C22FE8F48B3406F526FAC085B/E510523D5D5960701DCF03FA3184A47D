@@ -1,0 +1,51 @@
+﻿using System;
+using System.IO;
+using System.Text.RegularExpressions;
+using UglyToad.PdfPig;
+
+namespace INTERFACE_POSTRATA
+{
+    public static class PdfExtractor
+    {
+        public static string ExtrairPSA(string caminhoPdf)
+        {
+            try
+            {
+                string texto = string.Empty;
+                using (var document = PdfDocument.Open(caminhoPdf))
+                {
+                    foreach (var page in document.GetPages())
+                    {
+                        var t = page.Text;
+                        if (!string.IsNullOrEmpty(t)) texto += t + "\n";
+                    }
+                }
+
+                if (string.IsNullOrEmpty(texto)) return null;
+
+                // Padrões para PSA
+                var patterns = new[]
+                {
+                    new Regex(@"PSA\s*(?:Total)?\s*[:\-]?\s*([0-9]+(?:[.,][0-9]+)?)", RegexOptions.IgnoreCase),
+                    new Regex(@"PSA Total\s*[:\-]?\s*([0-9]+(?:[.,][0-9]+)?)", RegexOptions.IgnoreCase),
+                    new Regex(@"PSA Livre\s*[:\-]?\s*([0-9]+(?:[.,][0-9]+)?)", RegexOptions.IgnoreCase),
+                };
+
+                foreach (var pat in patterns)
+                {
+                    var m = pat.Match(texto);
+                    if (m.Success) return m.Groups[1].Value.Replace(',', '.');
+                }
+
+                var m2 = Regex.Match(texto, "PSA[\\s\\S]{0,30}([0-9]+(?:[.,][0-9]+)?)", RegexOptions.IgnoreCase);
+                if (m2.Success) return m2.Groups[1].Value.Replace(',', '.');
+
+                return null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+    }
+}

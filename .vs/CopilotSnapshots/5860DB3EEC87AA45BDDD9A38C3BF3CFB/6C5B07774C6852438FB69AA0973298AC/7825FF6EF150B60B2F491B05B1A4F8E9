@@ -1,0 +1,22 @@
+﻿using MySql.Data.MySqlClient;
+
+namespace INTERFACE_POSTRATA.Banco
+{
+    class Conexao
+    {
+        private static string conexao =
+            "server=localhost;" +
+            "database=Postrata;" +
+            "user=root;" +
+            "password=;";
+
+        public static MySqlConnection ObterConexao()
+        {
+            MySqlConnection conn = new MySqlConnection(conexao);
+
+            conn.Open();
+
+            return conn;
+        }
+    }
+}

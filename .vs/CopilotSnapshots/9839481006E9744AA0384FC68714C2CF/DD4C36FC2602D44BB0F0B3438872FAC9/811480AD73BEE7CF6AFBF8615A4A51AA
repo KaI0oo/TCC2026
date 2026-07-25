@@ -1,0 +1,91 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using INTERFACE_POSTRATA.Banco;
+using MySql.Data.MySqlClient;
+
+namespace INTERFACE_POSTRATA
+{
+    /// <summary>
+    /// Lógica interna para CadastroAnamnese.xaml
+    /// </summary>
+    public partial class CadastroAnamnese : Window
+    {
+        public CadastroAnamnese()
+        {
+            InitializeComponent();
+        }
+        private void VoltarMenu_Click(object sender, RoutedEventArgs e)
+        {
+            new Window1().Show();
+            this.Close();
+        }
+
+        private void SalvarContinuar_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                using (MySqlConnection conn = Conexao.ObterConexao())
+                {
+                    string sql = @"INSERT INTO anamnese
+                    (
+                        cpf_paciente,
+                        rm_medico,
+                        possui_doenca,
+                        doencas,
+                        observacoes,
+                        toma_remedio,
+                        remedio_nome,
+                        dosagem_mg,
+                        inicio_tratamento,
+                        fim_tratamento,
+                        tabagismo,
+                        alcool,
+                        frequencia
+                    ) VALUES (
+                        @cpf,@rm,@possui,@doencas,@obs,@remedio,@remedionome,@dosagem,@inicio,@fim,@tabagismo,@alcool,@frequencia
+                    );";
+
+                    using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@cpf", txtCPF.Text);
+                        cmd.Parameters.AddWithValue("@rm", txtRM.Text);
+                        cmd.Parameters.AddWithValue("@possui", chkDoenca.IsChecked == true ? 1 : 0);
+                        cmd.Parameters.AddWithValue("@doencas", txtDoencas.Text);
+                        cmd.Parameters.AddWithValue("@obs", txtObservacoes.Text);
+                        cmd.Parameters.AddWithValue("@remedio", chkRemedio.IsChecked == true ? 1 : 0);
+                        cmd.Parameters.AddWithValue("@remedionome", txtRemedio.Text);
+                        cmd.Parameters.AddWithValue("@dosagem", txtDosagem.Text);
+                        cmd.Parameters.AddWithValue("@inicio", dtInicio.SelectedDate ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@fim", dtFim.SelectedDate ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@tabagismo", ((ComboBoxItem)cbTabagismo.SelectedItem)?.Content?.ToString() ?? string.Empty);
+                        cmd.Parameters.AddWithValue("@alcool", ((ComboBoxItem)cbAlcool.SelectedItem)?.Content?.ToString() ?? string.Empty);
+                        cmd.Parameters.AddWithValue("@frequencia", txtFrequencia.Text);
+
+                        try { cmd.ExecuteNonQuery(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Erro ao inserir anamnese: {ex.Message}"); }
+                    }
+
+                    conn.Close();
+                }
+
+                // Avançar para próxima tela (se houver)
+                MessageBox.Show("Anamnese salva com sucesso.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+                INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao salvar anamnese: {ex.Message}");
+            }
+        }
+
+    }
+}

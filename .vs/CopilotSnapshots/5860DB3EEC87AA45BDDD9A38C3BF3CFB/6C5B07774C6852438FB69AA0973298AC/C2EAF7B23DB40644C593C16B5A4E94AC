@@ -1,0 +1,128 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using INTERFACE_POSTRATA.Banco;
+using MySql.Data.MySqlClient;
+namespace INTERFACE_POSTRATA
+{
+    /// <summary>
+    /// Lógica interna para CadastroPaciente.xaml
+    /// </summary>
+    public partial class CadastroPaciente : Window
+    {
+        public CadastroPaciente()
+        {
+            InitializeComponent();
+        }
+        private void VoltarMenu_Click(object sender, RoutedEventArgs e)
+        {
+            INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+            this.Close();
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            // Validar campos antes de tentar inserir
+            try
+            {
+                lblErrorPaciente.Visibility = System.Windows.Visibility.Collapsed;
+
+                string cpf = txtCPF.Text?.Trim();
+                string nome = txtNome.Text?.Trim();
+                string idadeStr = txtIdade.Text?.Trim();
+                string telefone = txtTelefone.Text?.Trim();
+
+                // Validações básicas
+                if (string.IsNullOrEmpty(cpf)) throw new System.Exception("CPF é obrigatório.");
+                if (!System.Text.RegularExpressions.Regex.IsMatch(cpf, "^\\d+$")) throw new System.Exception("CPF deve conter apenas dígitos.");
+                if (string.IsNullOrEmpty(nome)) throw new System.Exception("Nome é obrigatório.");
+                if (System.Text.RegularExpressions.Regex.IsMatch(nome, "\\d")) throw new System.Exception("Nome não pode conter números.");
+                if (string.IsNullOrEmpty(idadeStr) || !int.TryParse(idadeStr, out int idade) || idade <= 0) throw new System.Exception("Idade inválida. Informe um número inteiro positivo.");
+                if (!string.IsNullOrEmpty(telefone) && !System.Text.RegularExpressions.Regex.IsMatch(telefone, "^[0-9()+ -]*$")) throw new System.Exception("Telefone contém caracteres inválidos.");
+
+                using (MySqlConnection conn = Conexao.ObterConexao())
+                {
+                    string sql =
+                        @"INSERT INTO paciente
+                    (
+                        cpf,
+                        nome,
+                        idade,
+                        sexo,
+                        data_nascimento,
+                        raca,
+                        telefone,
+                        endereco,
+                        tipo_sanguineo,
+                        rm_medico
+                    )
+                    VALUES
+                    (
+                        @cpf,
+                        @nome,
+                        @idade,
+                        @sexo,
+                        @data,
+                        @raca,
+                        @telefone,
+                        @endereco,
+                        @sangue,
+                        @medico
+                    )";
+
+                    using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@cpf", cpf);
+                        cmd.Parameters.AddWithValue("@nome", nome);
+                        cmd.Parameters.AddWithValue("@idade", idade);
+
+                        cmd.Parameters.AddWithValue(
+                            "@sexo",
+                            ((ComboBoxItem)cbSexo.SelectedItem)?.Content?.ToString() ?? string.Empty
+                        );
+
+                        cmd.Parameters.AddWithValue(
+                            "@data",
+                            dtNascimento.SelectedDate ?? (object)System.DBNull.Value
+                        );
+
+                        cmd.Parameters.AddWithValue("@raca", txtRaca.Text);
+                        cmd.Parameters.AddWithValue("@telefone", telefone);
+                        cmd.Parameters.AddWithValue("@endereco", txtEndereco.Text);
+
+                        cmd.Parameters.AddWithValue(
+                            "@sangue",
+                            ((ComboBoxItem)cbSangue.SelectedItem)?.Content?.ToString() ?? string.Empty
+                        );
+
+                        // médico logado
+                        cmd.Parameters.AddWithValue("@medico", INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId ?? 0);
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    conn.Close();
+                }
+
+                // Avançar para anamnese
+                var anamnese = new CadastroAnamnese();
+                anamnese.Show();
+                INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+                this.Close();
+            }
+            catch (System.Exception ex)
+            {
+                lblErrorPaciente.Text = ex.Message;
+                lblErrorPaciente.Visibility = System.Windows.Visibility.Visible;
+            }
+        }
+    }
+}

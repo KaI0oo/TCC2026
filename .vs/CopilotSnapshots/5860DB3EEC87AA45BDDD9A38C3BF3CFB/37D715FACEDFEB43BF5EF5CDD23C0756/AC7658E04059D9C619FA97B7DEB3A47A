@@ -1,0 +1,68 @@
+﻿using System;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+namespace INTERFACE_POSTRATA
+{
+    // Classe responsável por validar dados de paciente
+    public static class PacienteValidator
+    {
+        // Valida todos os campos e retorna a idade convertida se válido, caso contrário lança Exception com mensagem apropriada
+        public static int Validate(string? cpf, string? nome, string? idadeStr, string? telefone)
+        {
+            if (string.IsNullOrWhiteSpace(cpf)) throw new Exception("CPF é obrigatório.");
+
+            // Remove caracteres não numéricos
+            string cpfDigits = new string(cpf.Where(char.IsDigit).ToArray());
+            if (cpfDigits.Length != 11) throw new Exception("CPF deve conter 11 dígitos.");
+
+            if (!IsCpfValid(cpfDigits)) throw new Exception("CPF inválido.");
+
+            if (string.IsNullOrWhiteSpace(nome)) throw new Exception("Nome é obrigatório.");
+            if (Regex.IsMatch(nome, "\\d")) throw new Exception("Nome não pode conter números.");
+            if (nome.Length < 2 || nome.Length > 100) throw new Exception("Nome deve ter entre 2 e 100 caracteres.");
+
+            if (string.IsNullOrWhiteSpace(idadeStr) || !int.TryParse(idadeStr, out int idade) || idade <= 0)
+                throw new Exception("Idade inválida. Informe um número inteiro positivo.");
+
+            if (!string.IsNullOrWhiteSpace(telefone))
+            {
+                // permite caracteres de formatação, mas conta apenas dígitos
+                string phoneDigits = new string(telefone.Where(char.IsDigit).ToArray());
+                if (phoneDigits.Length < 8 || phoneDigits.Length > 15)
+                    throw new Exception("Telefone deve conter entre 8 e 15 dígitos.");
+                if (!Regex.IsMatch(telefone, "^[0-9()+ \t\-]*$"))
+                    throw new Exception("Telefone contém caracteres inválidos.");
+            }
+
+            return idade;
+        }
+
+        // Implementação do cálculo dos dígitos verificadores do CPF
+        private static bool IsCpfValid(string cpf)
+        {
+            if (cpf.Length != 11) return false;
+
+            // Números com todos dígitos iguais não são válidos
+            if (cpf.Distinct().Count() == 1) return false;
+
+            int[] numbers = cpf.Select(c => c - '0').ToArray();
+
+            // Primeiro dígito verificador
+            int sum = 0;
+            for (int i = 0; i < 9; i++) sum += numbers[i] * (10 - i);
+            int remainder = sum % 11;
+            int firstCheck = remainder < 2 ? 0 : 11 - remainder;
+            if (numbers[9] != firstCheck) return false;
+
+            // Segundo dígito verificador
+            sum = 0;
+            for (int i = 0; i < 10; i++) sum += numbers[i] * (11 - i);
+            remainder = sum % 11;
+            int secondCheck = remainder < 2 ? 0 : 11 - remainder;
+            if (numbers[10] != secondCheck) return false;
+
+            return true;
+        }
+    }
+}

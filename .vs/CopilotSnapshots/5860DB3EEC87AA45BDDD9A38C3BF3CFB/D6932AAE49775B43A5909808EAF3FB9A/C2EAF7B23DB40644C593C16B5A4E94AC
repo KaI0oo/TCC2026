@@ -1,0 +1,123 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using INTERFACE_POSTRATA.Banco;
+using MySql.Data.MySqlClient;
+namespace INTERFACE_POSTRATA
+{
+    /// <summary>
+    /// Lógica interna para CadastroPaciente.xaml
+    /// </summary>
+    public partial class CadastroPaciente : Window
+    {
+        public CadastroPaciente()
+        {
+            InitializeComponent();
+        }
+        private void VoltarMenu_Click(object sender, RoutedEventArgs e)
+        {
+            INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+            this.Close();
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            // Validar campos antes de tentar inserir
+            try
+            {
+                lblErrorPaciente.Visibility = System.Windows.Visibility.Collapsed;
+
+                string cpf = txtCPF.Text?.Trim();
+                string nome = txtNome.Text?.Trim();
+                string idadeStr = txtIdade.Text?.Trim();
+                string telefone = txtTelefone.Text?.Trim();
+
+                // Validações centralizadas
+                int idade = PacienteValidator.Validate(cpf, nome, idadeStr, telefone);
+
+                using (MySqlConnection conn = Conexao.ObterConexao())
+                {
+                    string sql =
+                        @"INSERT INTO paciente
+                    (
+                        cpf,
+                        nome,
+                        idade,
+                        sexo,
+                        data_nascimento,
+                        raca,
+                        telefone,
+                        endereco,
+                        tipo_sanguineo,
+                        rm_medico
+                    )
+                    VALUES
+                    (
+                        @cpf,
+                        @nome,
+                        @idade,
+                        @sexo,
+                        @data,
+                        @raca,
+                        @telefone,
+                        @endereco,
+                        @sangue,
+                        @medico
+                    )";
+
+                    using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@cpf", cpf);
+                        cmd.Parameters.AddWithValue("@nome", nome);
+                        cmd.Parameters.AddWithValue("@idade", idade);
+
+                        cmd.Parameters.AddWithValue(
+                            "@sexo",
+                            ((ComboBoxItem)cbSexo.SelectedItem)?.Content?.ToString() ?? string.Empty
+                        );
+
+                        cmd.Parameters.AddWithValue(
+                            "@data",
+                            dtNascimento.SelectedDate ?? (object)System.DBNull.Value
+                        );
+
+                        cmd.Parameters.AddWithValue("@raca", txtRaca.Text);
+                        cmd.Parameters.AddWithValue("@telefone", telefone);
+                        cmd.Parameters.AddWithValue("@endereco", txtEndereco.Text);
+
+                        cmd.Parameters.AddWithValue(
+                            "@sangue",
+                            ((ComboBoxItem)cbSangue.SelectedItem)?.Content?.ToString() ?? string.Empty
+                        );
+
+                        // médico logado
+                        cmd.Parameters.AddWithValue("@medico", INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId ?? 0);
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // conn será fechado automaticamente pelo using
+                }
+
+                // Avançar para anamnese
+                var anamnese = new CadastroAnamnese();
+                anamnese.Show();
+                INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+                this.Close();
+            }
+            catch (System.Exception ex)
+            {
+                lblErrorPaciente.Text = ex.Message;
+                lblErrorPaciente.Visibility = System.Windows.Visibility.Visible;
+            }
+        }
+    }
+}

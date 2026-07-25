@@ -1,0 +1,210 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using System.Diagnostics;
+namespace INTERFACE_POSTRATA
+{
+    public partial class CadastroExame : Window
+    {
+        public CadastroExame()
+        {
+            InitializeComponent();
+        }
+
+        private void GerarLaudo_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Dados do paciente (você pode querer buscar do banco de dados)
+                string paciente = "Paciente Teste";
+                string medico = "Dr. Carlos Henrique";
+                string crm = "CRM 123456";
+
+                // Coletar e normalizar os dados de entrada
+                string idadeRaw = txtIdade.Text.Trim();
+                string psaTotalRaw = txtPSATotal.Text.Trim();
+                string psaLivreRaw = txtPSALivre.Text.Trim();
+                string densidadeRaw = txtDensidade.Text.Trim();
+
+                // Validar campos antes de chamar a IA
+                if (string.IsNullOrEmpty(idadeRaw) || string.IsNullOrEmpty(psaTotalRaw) ||
+                    string.IsNullOrEmpty(psaLivreRaw) || string.IsNullOrEmpty(densidadeRaw))
+                {
+                    MessageBox.Show("Por favor, preencha todos os campos antes de gerar o laudo.", "Campos Obrigatórios", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Normalizar e validar números (aceita "," ou ".")
+                string idade = NormalizarNumero(idadeRaw);
+                string psaTotal = NormalizarNumero(psaTotalRaw);
+                string psaLivre = NormalizarNumero(psaLivreRaw);
+                string densidade = NormalizarNumero(densidadeRaw);
+
+                // Verificar se a normalização foi bem-sucedida
+                if (idade == null || psaTotal == null || psaLivre == null || densidade == null)
+                {
+                    MessageBox.Show("Um ou mais campos contêm valores inválidos. Por favor, insira números válidos (use . ou , para decimais).", "Erro de Formato", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Obter diretório do executável
+                string dirExecavel = AppDomain.CurrentDomain.BaseDirectory;
+                string caminhoScriptIA = System.IO.Path.Combine(dirExecavel, "executar_ia.py");
+
+                // Verificar se o script existe
+                if (!System.IO.File.Exists(caminhoScriptIA))
+                {
+                    MessageBox.Show($"Arquivo da IA não encontrado: {caminhoScriptIA}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Encontrar Python instalado
+                string pythonExe = EncontrarPython();
+                if (string.IsNullOrEmpty(pythonExe))
+                {
+                    MessageBox.Show("Python não foi encontrado no sistema. Certifique-se de tê-lo instalado.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Debug: Exibir dados sendo enviados para a IA
+                string debugMsg = $"Dados enviados para a IA:\n" +
+                                 $"Idade: {idade}\n" +
+                                 $"PSA Total: {psaTotal}\n" +
+                                 $"PSA Livre: {psaLivre}\n" +
+                                 $"Densidade: {densidade}\n\n" +
+                                 $"Relação L/T calculada pela IA: {psaLivre} / {psaTotal}";
+
+                System.Diagnostics.Debug.WriteLine(debugMsg);
+
+                // Configurar processo
+                ProcessStartInfo psi = new ProcessStartInfo();
+                psi.FileName = pythonExe;
+                psi.Arguments = $"\"{caminhoScriptIA}\" {idade} {psaTotal} {psaLivre} {densidade}";
+                psi.RedirectStandardOutput = true;
+                psi.RedirectStandardError = true;
+                psi.UseShellExecute = false;
+                psi.CreateNoWindow = true;
+
+                // Debug: Exibir comando sendo executado
+                System.Diagnostics.Debug.WriteLine($"Comando: {pythonExe} {psi.Arguments}");
+
+                // Executar IA
+                Process processo = Process.Start(psi);
+                processo.WaitForExit();
+
+                string saida = processo.StandardOutput.ReadToEnd().Trim();
+                string erro = processo.StandardError.ReadToEnd().Trim();
+
+                // Debug: Exibir saída da IA
+                System.Diagnostics.Debug.WriteLine($"Saída da IA: {saida}");
+                System.Diagnostics.Debug.WriteLine($"Erro da IA: {erro}");
+
+                // Tratar resultado
+                string resultadoIA = string.Empty;
+
+                if (!string.IsNullOrEmpty(erro))
+                {
+                    MessageBox.Show($"Erro ao executar a IA:\n{erro}", "Erro de Execução", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                if (!string.IsNullOrEmpty(saida))
+                {
+                    resultadoIA = saida.ToUpper().Trim();
+                    // Validar resultado
+                    if (resultadoIA != "SUSPEITO" && resultadoIA != "BENIGNO")
+                    {
+                        MessageBox.Show($"Resultado inesperado da IA: {resultadoIA}\nUsando valor padrão: BENIGNO", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        resultadoIA = "BENIGNO"; // valor padrão
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("A IA não retornou um resultado. Usando valor padrão: BENIGNO", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    resultadoIA = "BENIGNO"; // valor padrão
+                }
+
+                // Abrir tela de laudo
+                GerarLaudo tela = new GerarLaudo(
+                    paciente,
+                    idade,
+                    medico,
+                    crm,
+                    psaTotal,
+                    psaLivre,
+                    densidade,
+                    resultadoIA
+                );
+                tela.Show();
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao gerar laudo:\n{ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private string EncontrarPython()
+        {
+            // Procurar Python no PATH
+            string pythonExe = "python";
+
+            try
+            {
+                // Tentar usar 'where python' no Windows
+                ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", "/c where python")
+                {
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                Process p = Process.Start(psi);
+                string resultado = p.StandardOutput.ReadToEnd().Trim();
+
+                if (!string.IsNullOrEmpty(resultado))
+                {
+                    return resultado.Split(new[] { Environment.NewLine }, StringSplitOptions.None)[0];
+                }
+            }
+            catch { }
+
+            // Caminhos comuns onde Python pode estar
+            string[] caminhosPython = new[]
+            {
+                @"C:\Python311\python.exe",
+                @"C:\Python310\python.exe",
+                @"C:\Python312\python.exe",
+                @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python\Python311\python.exe",
+                @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python\Python310\python.exe",
+                @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python\Python312\python.exe",
+                @"C:\Program Files\Python311\python.exe",
+                @"C:\Program Files\Python310\python.exe",
+                @"C:\Program Files\Python312\python.exe"
+            };
+
+            foreach (string caminho in caminhosPython)
+            {
+                if (System.IO.File.Exists(caminho))
+                {
+                    return caminho;
+                }
+            }
+
+            return pythonExe; // retorna "python" como fallback
+        }
+        private void VoltarMenu_Click(object sender, RoutedEventArgs e)
+        {
+            new Window1().Show();
+            this.Close();
+        }
+    }
+}
