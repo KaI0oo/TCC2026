@@ -60,7 +60,7 @@ namespace INTERFACE_POSTRATA {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/INTERFACE_POSTRATA;V1.0.0.0;component/inputdialog.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/INTERFACE_POSTRATA;component/inputdialog.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\InputDialog.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

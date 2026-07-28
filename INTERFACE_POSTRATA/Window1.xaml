@@ -137,6 +137,14 @@
 
                         </TreeViewItem>
 
+                        <!-- INÍCIO -->
+                        <TreeViewItem>
+                            <TreeViewItem.Header>
+                                <TextBlock Text="Retorna ao Painel" FontWeight="Bold" />
+                            </TreeViewItem.Header>
+                            <TreeViewItem Header="Painel Principal" Selected="Inicio_Click" />
+                        </TreeViewItem>
+
                         <!-- CONTA -->
 
                         <TreeViewItem IsExpanded="True">

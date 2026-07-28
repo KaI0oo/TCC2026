@@ -34,13 +34,57 @@ namespace INTERFACE_POSTRATA
                     return;
                 }
 
-                // Aqui você pode implementar autenticação real contra o banco.
-                // Para agora, aceitar qualquer par usuário/senha e criar sessão.
-                INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId = 1; // Placeholder (substituir por id do DB após autenticação)
-                INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoName = usuario;
+                // Autenticação real contra tabela medico
+                using (var conn = INTERFACE_POSTRATA.Banco.Conexao.ObterConexao())
+                {
+                    string sql = @"SELECT rm, nome, cargo FROM medico WHERE rm = @rm AND senha = @senha";
+                    using (var cmd = new MySql.Data.MySqlClient.MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@rm", usuario);
+                        cmd.Parameters.AddWithValue("@senha", senha);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (!reader.Read())
+                            {
+                                lblLoginError.Text = "Usuário ou senha inválidos.";
+                                lblLoginError.Visibility = System.Windows.Visibility.Visible;
+                                return;
+                            }
 
-                INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
-                this.Close();
+                            string nome = reader["nome"]?.ToString() ?? string.Empty;
+                            string cargo = reader["cargo"]?.ToString() ?? string.Empty;
+
+                            // Criar sessão com informações básicas
+                            INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId = int.TryParse(reader["rm"]?.ToString(), out int rmVal) ? rmVal : 0;
+                            INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoName = nome;
+
+                            // Abrir telas conforme cargo
+                            if (cargo.Equals("RH", System.StringComparison.OrdinalIgnoreCase))
+                            {
+                                var tela = new TelaRH();
+                                tela.Show();
+                            }
+                            else if (cargo.Equals("Medico", System.StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Médico usa a janela principal (Window1)
+                                var tela = new Window1();
+                                tela.Show();
+                            }
+                            else if (cargo.Equals("Secretaria", System.StringComparison.OrdinalIgnoreCase))
+                            {
+                                var tela = new TelaSecretaria();
+                                tela.Show();
+                            }
+                            else
+                            {
+                                // Cargo desconhecido: abrir janela principal genérica
+                                INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+                            }
+
+                            this.Close();
+                        }
+                    }
+                }
             }
             catch (System.Exception ex)
             {

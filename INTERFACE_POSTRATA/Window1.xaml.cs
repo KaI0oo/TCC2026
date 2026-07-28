@@ -142,8 +142,9 @@ namespace INTERFACE_POSTRATA
 
         private void Logout_Click(object sender, RoutedEventArgs e)
         {
-            // Evitar múltiplas janelas MainWindow
-            INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+            // Abrir a tela de Login (MainWindow) e fechar apenas esta janela
+            var login = new MainWindow();
+            login.Show();
             this.Close();
         }
 
@@ -203,6 +204,48 @@ namespace INTERFACE_POSTRATA
         private void ConsultarLaudos_Click(object sender, RoutedEventArgs e)
         {
             SetMainContent(new System.Windows.Controls.TextBlock { Text = "Funcionalidade de laudos ainda não implementada.", FontSize = 20, Margin = new System.Windows.Thickness(20) });
+        }
+
+        private void Inicio_Click(object sender, RoutedEventArgs e)
+        {
+            RestoreMainPanel();
+        }
+
+        // Torna acessível a restauração do painel principal para outros controles
+        public void RestoreMainPanel()
+        {
+            var label = new System.Windows.Controls.Label
+            {
+                Content = "Painel Principal",
+                FontSize = 32,
+                FontWeight = System.Windows.FontWeights.Bold,
+                Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x00, 0x60, 0x64)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = System.Windows.VerticalAlignment.Top,
+                Margin = new System.Windows.Thickness(0,25,0,0)
+            };
+
+            var stack = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(30,100,30,30) };
+            stack.Children.Add(new System.Windows.Controls.TextBlock
+            {
+                Text = "Bem-vindo ao sistema da clínica.",
+                FontSize = 20,
+                FontWeight = System.Windows.FontWeights.SemiBold
+            });
+
+            stack.Children.Add(new System.Windows.Controls.TextBlock
+            {
+                Text = "Selecione uma opção no menu ao lado para iniciar.",
+                FontSize = 20,
+                Foreground = System.Windows.Media.Brushes.Gray,
+                Margin = new System.Windows.Thickness(0,15,0,0)
+            });
+
+            var container = new System.Windows.Controls.Grid();
+            container.Children.Add(label);
+            container.Children.Add(stack);
+
+            SetMainContent(container);
         }
 
 

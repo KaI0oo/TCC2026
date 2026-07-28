@@ -64,7 +64,8 @@ namespace INTERFACE_POSTRATA
             var win = Window.GetWindow(this) as Window1;
             if (win != null)
             {
-                win.ClearMainContent();
+                // Restaurar o painel principal usando o mesmo método do menu Início
+                win.RestoreMainPanel();
             }
         }
     }

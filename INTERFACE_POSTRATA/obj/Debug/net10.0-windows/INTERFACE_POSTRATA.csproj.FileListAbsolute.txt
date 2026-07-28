@@ -54,3 +54,12 @@ C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net1
 C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\ListarExamesControl.g.cs
 C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\ListarLaudosControl.baml
 C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\ListarLaudosControl.g.cs
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\INTERFACE_POSTRATA.sourcelink.json
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\TelaMedico.baml
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\TelaRH.baml
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\TelaSecretaria.baml
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\TelaMedico.g.cs
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\TelaRH.g.cs
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\TelaSecretaria.g.cs
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\CadastroProfissional.baml
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\CadastroProfissional.g.cs

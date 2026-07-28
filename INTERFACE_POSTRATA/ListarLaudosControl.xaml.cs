@@ -63,7 +63,11 @@ namespace INTERFACE_POSTRATA
         private void BtnVoltar_Click(object sender, RoutedEventArgs e)
         {
             var win = Window.GetWindow(this) as Window1;
-            if (win != null) win.ClearMainContent();
+            if (win != null)
+            {
+                // Restaurar o painel principal usando o mesmo método do menu Início
+                win.RestoreMainPanel();
+            }
         }
     }
 }

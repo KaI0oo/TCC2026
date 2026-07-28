@@ -141,7 +141,7 @@ namespace INTERFACE_POSTRATA {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/INTERFACE_POSTRATA;V1.0.0.0;component/cadastroexame.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/INTERFACE_POSTRATA;component/cadastroexame.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\CadastroExame.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

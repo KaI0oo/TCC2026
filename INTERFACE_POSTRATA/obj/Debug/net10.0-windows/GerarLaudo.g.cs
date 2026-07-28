@@ -149,7 +149,7 @@ namespace INTERFACE_POSTRATA {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/INTERFACE_POSTRATA;V1.0.0.0;component/gerarlaudo.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/INTERFACE_POSTRATA;component/gerarlaudo.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\GerarLaudo.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);
