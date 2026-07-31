@@ -21,37 +21,77 @@ namespace INTERFACE_POSTRATA
     /// </summary>
     public partial class CadastroAnamnese : Window
     {
+        private readonly Dictionary<string, string> _prevText = new Dictionary<string, string>();
+        private readonly Dictionary<string, int> _lastSelection = new Dictionary<string, int>();
+        private bool alterando = false;
+
         public CadastroAnamnese()
         {
             InitializeComponent();
+            // configurar máscara de data para txtInicio e txtFim usando mesma lógica de CadastroPaciente
+            txtInicio.PreviewKeyDown += TxtDate_PreviewKeyDown;
+            txtInicio.PreviewTextInput += TxtData_PreviewTextInput;
+            DataObject.AddPastingHandler(txtInicio, OnTxtDatePasting);
+
+            txtFim.PreviewKeyDown += TxtDate_PreviewKeyDown;
+            txtFim.PreviewTextInput += TxtData_PreviewTextInput;
+            DataObject.AddPastingHandler(txtFim, OnTxtDatePasting);
         }
         // Permitir apenas dígitos (usado para dosagem, número, CEP, etc.)
         private void DigitsOnly_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
         {
             e.Handled = !Regex.IsMatch(e.Text, "^[0-9]+$");
         }
+        // Reutilizar aqui a mesma implementação de máscara de data usada em CadastroPaciente
+        private void TxtDate_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            var tb = sender as System.Windows.Controls.TextBox;
+            if (tb == null) return;
+            _prevText[tb.Name] = tb.Text ?? string.Empty;
+            _lastSelection[tb.Name] = tb.SelectionStart;
+        }
 
-        // Entrada de data DD/MM/AA para início/fim do tratamento
+        private void OnTxtDatePasting(object sender, DataObjectPastingEventArgs e)
+        {
+            var tb = sender as System.Windows.Controls.TextBox;
+            if (tb == null) return;
+            _prevText[tb.Name] = tb.Text ?? string.Empty;
+            _lastSelection[tb.Name] = tb.SelectionStart;
+        }
+
         private void TxtData_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
         {
             if (!Regex.IsMatch(e.Text, "^[0-9]+$")) { e.Handled = true; return; }
+            var tb = sender as System.Windows.Controls.TextBox;
+            if (tb == null) return;
+            // permitir inserir mas a lógica de máscara será aplicada no TextChanged
             e.Handled = false;
         }
 
         private void TxtData_TextChanged(object sender, TextChangedEventArgs e)
         {
-            var tb = sender as TextBox;
-            if (tb == null) return;
-            string digits = new string((tb.Text ?? string.Empty).Where(char.IsDigit).ToArray());
-            string masked = string.Empty;
-            for (int i = 0; i < digits.Length && i < 6; i++)
-            {
-                masked += digits[i];
-                if (i == 1 || i == 3) masked += '/';
-            }
-            int sel = tb.SelectionStart;
-            tb.Text = masked;
-            tb.SelectionStart = Math.Min(masked.Length, sel);
+            if (alterando)
+                return;
+
+            alterando = true;
+
+            TextBox tb = (TextBox)sender;
+
+            string numeros = new string(tb.Text.Where(char.IsDigit).ToArray());
+
+            if (numeros.Length > 8)
+                numeros = numeros.Substring(0, 8);
+
+            if (numeros.Length > 2)
+                numeros = numeros.Insert(2, "/");
+
+            if (numeros.Length > 5)
+                numeros = numeros.Insert(5, "/");
+
+            tb.Text = numeros;
+            tb.SelectionStart = tb.Text.Length;
+
+            alterando = false;
         }
         private void ChkDoenca_Checked(object sender, RoutedEventArgs e)
         {
@@ -72,6 +112,11 @@ namespace INTERFACE_POSTRATA
             txtRemedio.Background = System.Windows.Media.Brushes.White;
             txtDosagem.IsReadOnly = false;
             txtDosagem.Background = System.Windows.Media.Brushes.White;
+            // habilitar datas quando tomar remédio
+            txtInicio.IsReadOnly = false;
+            txtInicio.Background = System.Windows.Media.Brushes.White;
+            txtFim.IsReadOnly = false;
+            txtFim.Background = System.Windows.Media.Brushes.White;
         }
 
         private void ChkRemedio_Unchecked(object sender, RoutedEventArgs e)
@@ -82,6 +127,13 @@ namespace INTERFACE_POSTRATA
             txtDosagem.IsReadOnly = true;
             txtDosagem.Background = System.Windows.Media.Brushes.LightGray;
             txtDosagem.Text = string.Empty;
+            // desabilitar e limpar datas
+            txtInicio.IsReadOnly = true;
+            txtInicio.Background = System.Windows.Media.Brushes.LightGray;
+            txtInicio.Text = string.Empty;
+            txtFim.IsReadOnly = true;
+            txtFim.Background = System.Windows.Media.Brushes.LightGray;
+            txtFim.Text = string.Empty;
         }
 
         private void CbTabagismo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -166,6 +218,18 @@ namespace INTERFACE_POSTRATA
 
                 using (MySqlConnection conn = Conexao.ObterConexao())
                 {
+                    // Verificar se o CPF informado corresponde a um paciente cadastrado
+                    string sqlCheck = "SELECT COUNT(1) FROM paciente WHERE cpf = @cpf";
+                    using (MySqlCommand cmdCheck = new MySqlCommand(sqlCheck, conn))
+                    {
+                        cmdCheck.Parameters.AddWithValue("@cpf", validation.Value.CpfPaciente);
+                        var exists = Convert.ToInt32(cmdCheck.ExecuteScalar() ?? 0);
+                        if (exists == 0)
+                        {
+                            MessageBox.Show("Paciente não cadastrado. Cadastre o paciente antes de inserir a anamnese.", "Paciente não encontrado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            return;
+                        }
+                    }
                     string sql = @"INSERT INTO anamnese
                     (
                         cpf_paciente,
@@ -188,18 +252,30 @@ namespace INTERFACE_POSTRATA
                     using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@cpf", validation.Value.CpfPaciente);
-                        cmd.Parameters.AddWithValue("@rm", validation.Value.RmMedico.HasValue ? (object)validation.Value.RmMedico.Value : (object)string.Empty);
+                        // rm_medico: usar DBNull quando não informado
+                        cmd.Parameters.AddWithValue("@rm", validation.Value.RmMedico.HasValue ? (object)validation.Value.RmMedico.Value : (object)System.DBNull.Value);
                         cmd.Parameters.AddWithValue("@possui", validation.Value.PossuiDoenca ? 1 : 0);
-                        cmd.Parameters.AddWithValue("@doencas", validation.Value.Doencas);
+
+                        // quando não possui doença, salvar 'Nunca'
+                        cmd.Parameters.AddWithValue("@doencas", validation.Value.PossuiDoenca ? validation.Value.Doencas : "Nunca");
+
                         cmd.Parameters.AddWithValue("@obs", validation.Value.Observacoes);
                         cmd.Parameters.AddWithValue("@remedio", validation.Value.TomaRemedio ? 1 : 0);
-                        cmd.Parameters.AddWithValue("@remedionome", validation.Value.RemedioNome);
+
+                        // quando não toma remédio, salvar 'Nunca' no nome; dosagem fica DBNull se nula
+                        cmd.Parameters.AddWithValue("@remedionome", validation.Value.TomaRemedio ? validation.Value.RemedioNome : "Nunca");
                         cmd.Parameters.AddWithValue("@dosagem", validation.Value.DosagemMg.HasValue ? (object)validation.Value.DosagemMg.Value : (object)System.DBNull.Value);
+
+                        // datas: usar valores validados ou DBNull
                         cmd.Parameters.AddWithValue("@inicio", validation.Value.InicioTratamento ?? (object)System.DBNull.Value);
                         cmd.Parameters.AddWithValue("@fim", validation.Value.FimTratamento ?? (object)System.DBNull.Value);
-                        cmd.Parameters.AddWithValue("@tabagismo", validation.Value.Tabagismo);
-                        cmd.Parameters.AddWithValue("@alcool", validation.Value.Alcool);
-                        cmd.Parameters.AddWithValue("@frequencia", validation.Value.Frequencia);
+
+                        // tabagismo/alcool: se vazio, salvar 'Nunca'
+                        cmd.Parameters.AddWithValue("@tabagismo", string.IsNullOrWhiteSpace(validation.Value.Tabagismo) ? "Nunca" : validation.Value.Tabagismo);
+                        cmd.Parameters.AddWithValue("@alcool", string.IsNullOrWhiteSpace(validation.Value.Alcool) ? "Nunca" : validation.Value.Alcool);
+
+                        // frequencia: permitir vazio
+                        cmd.Parameters.AddWithValue("@frequencia", string.IsNullOrWhiteSpace(validation.Value.Frequencia) ? "" : validation.Value.Frequencia);
 
                         try { cmd.ExecuteNonQuery(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Erro ao inserir anamnese: {ex.Message}"); }
                     }

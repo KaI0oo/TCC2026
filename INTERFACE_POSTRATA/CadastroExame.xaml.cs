@@ -16,9 +16,128 @@ namespace INTERFACE_POSTRATA
 {
     public partial class CadastroExame : Window
     {
+        private readonly System.Collections.Generic.Dictionary<string, string> _prevText = new System.Collections.Generic.Dictionary<string, string>();
+        private readonly System.Collections.Generic.Dictionary<string, int> _lastSelection = new System.Collections.Generic.Dictionary<string, int>();
+        private bool alterando = false;
         public CadastroExame()
         {
             InitializeComponent();
+            // aplicar máscara de data do mesmo modo que CadastroPaciente ao DatePicker interno
+            dtExame.Loaded += DtExame_Loaded;
+        }
+
+        private void DtExame_Loaded(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dp = dtExame;
+                // localizar o DatePickerTextBox na árvore visual
+                var textBox = FindVisualChild<System.Windows.Controls.Primitives.DatePickerTextBox>(dp);
+                if (textBox != null)
+                {
+                    textBox.PreviewKeyDown += TxtDate_PreviewKeyDown;
+                    textBox.PreviewTextInput += TxtDate_PreviewTextInput;
+                    DataObject.AddPastingHandler(textBox, OnTxtDatePasting);
+                    textBox.TextChanged += TxtDate_TextChanged;
+                }
+            }
+            catch { }
+        }
+
+        private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            if (parent == null) return null;
+            int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < count; i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+                if (child is T t) return t;
+                var result = FindVisualChild<T>(child);
+                if (result != null) return result;
+            }
+            return null;
+        }
+
+        private void TxtDate_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            var tb = sender as System.Windows.Controls.TextBox;
+            if (tb == null) return;
+            _prevText[tb.Name] = tb.Text ?? string.Empty;
+            _lastSelection[tb.Name] = tb.SelectionStart;
+        }
+
+        private void OnTxtDatePasting(object sender, DataObjectPastingEventArgs e)
+        {
+            var tb = sender as System.Windows.Controls.TextBox;
+            if (tb == null) return;
+            _prevText[tb.Name] = tb.Text ?? string.Empty;
+            _lastSelection[tb.Name] = tb.SelectionStart;
+        }
+
+        private void TxtDate_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            if (!System.Text.RegularExpressions.Regex.IsMatch(e.Text, "^[0-9]+$")) { e.Handled = true; return; }
+            var tb = sender as System.Windows.Controls.TextBox;
+            if (tb == null) return;
+            e.Handled = false;
+        }
+
+        private void TxtDate_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (alterando) return;
+            alterando = true;
+            var tb = sender as System.Windows.Controls.TextBox;
+            if (tb == null) { alterando = false; return; }
+
+            string numeros = new string(tb.Text.Where(char.IsDigit).ToArray());
+
+            if (numeros.Length > 8)
+                numeros = numeros.Substring(0, 8);
+
+            if (numeros.Length > 2)
+                numeros = numeros.Insert(2, "/");
+
+            if (numeros.Length > 5)
+                numeros = numeros.Insert(5, "/");
+
+            tb.Text = numeros;
+            tb.SelectionStart = tb.Text.Length;
+
+            alterando = false;
+        }
+
+        private void TxtCPF_LostFocus(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string cpf = txtCPF.Text?.Trim();
+                if (string.IsNullOrWhiteSpace(cpf)) return;
+
+                using (var conn = Conexao.ObterConexao())
+                {
+                    using (var cmd = new MySqlCommand("SELECT idade, nome FROM paciente WHERE cpf = @cpf", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@cpf", cpf);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                var idadeObj = reader["idade"];
+                                if (idadeObj != DBNull.Value)
+                                {
+                                    txtIdade.Text = idadeObj.ToString();
+                                }
+                                // Também pode preencher nome do paciente caso queira
+                                // string nome = reader["nome"]?.ToString() ?? string.Empty;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Services.DialogService.Error("Erro ao consultar paciente: " + ex.Message);
+            }
         }
 
         private void GerarLaudoHtml_Click(object sender, RoutedEventArgs e)

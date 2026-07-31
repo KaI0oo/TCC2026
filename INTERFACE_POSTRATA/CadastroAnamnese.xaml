@@ -137,7 +137,7 @@
                                                FontSize="20"
                                                FontWeight="SemiBold"/>
 
-                                    <TextBox x:Name="txtInicio" Height="35" FontSize="18" Margin="0,5,0,0" PreviewTextInput="TxtData_PreviewTextInput" TextChanged="TxtData_TextChanged" />
+                                    <TextBox x:Name="txtInicio" Height="35" FontSize="18" Margin="0,5,0,0" PreviewTextInput="TxtData_PreviewTextInput" TextChanged="TxtData_TextChanged" IsReadOnly="True" Background="#EEE" />
 
                                 </StackPanel>
 
@@ -147,7 +147,7 @@
                                                FontSize="20"
                                                FontWeight="SemiBold"/>
 
-                                    <TextBox x:Name="txtFim" Height="35" FontSize="18" Margin="0,5,0,0" PreviewTextInput="TxtData_PreviewTextInput" TextChanged="TxtData_TextChanged" />
+                                    <TextBox x:Name="txtFim" Height="35" FontSize="18" Margin="0,5,0,0" PreviewTextInput="TxtData_PreviewTextInput" TextChanged="TxtData_TextChanged" IsReadOnly="True" Background="#EEE" />
 
                                 </StackPanel>
 
@@ -155,7 +155,7 @@
 
                             <!-- TABAGISMO -->
 
-                            <TextBlock Text="Paciente tem historia de uso atual ou prévio de tabaco ?"
+                            <TextBlock Text="Paciente tem histórico de uso atual ou prévio de tabaco?"
                                        FontSize="20"
                                        FontWeight="SemiBold"/>
 

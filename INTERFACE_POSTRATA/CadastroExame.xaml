@@ -52,7 +52,8 @@
                             <TextBox x:Name="txtCPF"
                                      Height="35"
                                      FontSize="18"
-                                     Margin="0,5,0,15"/>
+                                     Margin="0,5,0,15"
+                                     LostFocus="TxtCPF_LostFocus"/>
 
                             <!-- RM -->
 
@@ -195,23 +196,26 @@
                                         FontSize="20"
                                         Margin="0,5,0,25"/>
 
-                            <!-- BOTÃO -->
-
-                            <Button Content="Gerar Laudo"
-                                    Click="GerarLaudo_Click"
-                                    Height="50"
-                                    FontSize="18"
-                                    FontWeight="Bold"
-                                    Background="#00BCD4"
-                                    Foreground="White"/>
-                            <Button Content="Gerar Laudo (HTML)"
-                                    Click="GerarLaudoHtml_Click"
-                                    Height="50"
-                                    FontSize="18"
-                                    FontWeight="Bold"
-                                    Background="#00796B"
-                                    Foreground="White"
-                                    Margin="10,0,0,0"/>
+                            <!-- BOTÕES -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                <Button Content="Gerar Laudo"
+                                        Click="GerarLaudo_Click"
+                                        Width="200"
+                                        Height="50"
+                                        FontSize="18"
+                                        FontWeight="Bold"
+                                        Background="#00BCD4"
+                                        Foreground="White"/>
+                                <Button Content="Gerar Laudo (HTML)"
+                                        Click="GerarLaudoHtml_Click"
+                                        Width="240"
+                                        Height="50"
+                                        FontSize="18"
+                                        FontWeight="Bold"
+                                        Background="#00796B"
+                                        Foreground="White"
+                                        Margin="10,0,0,0"/>
+                            </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
                                 <Button Content="Menu Principal" Height="45" Width="160" FontSize="16" FontWeight="Bold" Background="#00838F" Foreground="White" Click="VoltarMenu_Click" />
                                 <Button Content="Limpar Campos" Height="45" Width="160" Margin="10,0,0,0" FontSize="16" FontWeight="Bold" Background="#FFC107" Foreground="Black" Click="LimparCampos_Click" />

@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Linq;
 
 namespace INTERFACE_POSTRATA
 {
@@ -34,6 +35,25 @@ namespace INTERFACE_POSTRATA
             cad.ShowDialog();
         }
 
+        private void Logout_Click(object sender, RoutedEventArgs e)
+        {
+            // Encerrar sessão atual
+            INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId = null;
+            INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoName = null;
+            INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoCrm = null;
+            INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoCargo = null;
+
+            // Abrir tela de login sem encerrar a aplicação
+            var login = new MainWindow();
+            login.Show();
+            this.Close();
+        }
+
+        private void FecharPrograma_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
         private void AlterarAdministrador_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("Funcionalidade de alterar administrador ainda não implementada.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -41,7 +61,16 @@ namespace INTERFACE_POSTRATA
 
         private void Conta_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Gerenciar conta (em breve).", "Conta", MessageBoxButton.OK, MessageBoxImage.Information);
+            var tela = new GerenciarContaRH();
+            tela.Owner = this;
+            tela.ShowDialog();
+        }
+
+        private void AlterarRHPrincipal_Click(object sender, RoutedEventArgs e)
+        {
+            var tela = new AlterarRHPrincipal();
+            tela.Owner = this;
+            tela.ShowDialog();
         }
     }
 }

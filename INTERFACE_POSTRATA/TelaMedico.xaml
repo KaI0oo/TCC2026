@@ -1,7 +1,9 @@
 <Window x:Class="INTERFACE_POSTRATA.TelaMedico"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Tela Médico" Height="400" Width="600">
+        Title="Tela Médico"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen">
     <Grid Background="#F4FDFD">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
             <TextBlock Text="Área Médico" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"/>

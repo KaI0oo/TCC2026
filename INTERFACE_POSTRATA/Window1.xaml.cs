@@ -20,6 +20,42 @@ namespace INTERFACE_POSTRATA
             {
                 MessageBox.Show(ex.Message);
             }
+            // Atualizar cabeçalho com informações da sessão, quando disponível
+            try
+            {
+                var nome = INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoName ?? string.Empty;
+                var crm = INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoCrm ?? string.Empty;
+                var cargo = INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoCargo ?? string.Empty;
+
+                string prefixo = "";
+                if (cargo.Equals("MEDICO", StringComparison.OrdinalIgnoreCase) || cargo.Equals("Medico", StringComparison.OrdinalIgnoreCase))
+                {
+                    // tentativa simples de inferir gênero pelo nome (se terminar com 'a' usar Dra.)
+                    prefixo = (nome.EndsWith("a", StringComparison.OrdinalIgnoreCase)) ? "Dra." : "Dr.";
+                }
+                else if (cargo.Equals("RH", StringComparison.OrdinalIgnoreCase))
+                {
+                    prefixo = "RH";
+                }
+                else if (cargo.Equals("SECRETARIA", StringComparison.OrdinalIgnoreCase) || cargo.Equals("Secretaria", StringComparison.OrdinalIgnoreCase))
+                {
+                    prefixo = "Secretária";
+                }
+
+                if (!string.IsNullOrWhiteSpace(nome))
+                {
+                    var tbName = this.FindName("txtHeaderName") as System.Windows.Controls.TextBlock;
+                    var tbCrm = this.FindName("txtHeaderCRM") as System.Windows.Controls.TextBlock;
+                    var tbWelcome = this.FindName("txtWelcome") as System.Windows.Controls.TextBlock;
+                    if (tbName != null)
+                        tbName.Text = string.IsNullOrWhiteSpace(prefixo) ? nome : prefixo + " " + nome;
+                    if (tbCrm != null)
+                        tbCrm.Text = string.IsNullOrWhiteSpace(crm) ? string.Empty : "CRM " + crm;
+                    if (tbWelcome != null)
+                        tbWelcome.Text = "Bem-vindo, " + (string.IsNullOrWhiteSpace(prefixo) ? nome : prefixo + " " + nome);
+                }
+            }
+            catch { }
         }
 
         // CADASTRO

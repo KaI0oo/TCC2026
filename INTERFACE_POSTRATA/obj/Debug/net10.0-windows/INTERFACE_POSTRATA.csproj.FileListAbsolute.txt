@@ -63,3 +63,11 @@ C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net1
 C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\TelaSecretaria.g.cs
 C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\CadastroProfissional.baml
 C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\CadastroProfissional.g.cs
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\ListarAnamnesesControl.baml
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\ListarAnamnesesControl.g.cs
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\GerenciarContaRH.baml
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\GerenciarContaRH.g.cs
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\AlterarRHPrincipal.baml
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\PasswordPrompt.baml
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\AlterarRHPrincipal.g.cs
+C:\Users\kaioc\source\repos\INTERFACE_POSTRATA\INTERFACE_POSTRATA\obj\Debug\net10.0-windows\PasswordPrompt.g.cs

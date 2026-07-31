@@ -29,14 +29,14 @@
                         <Image Stretch="Fill"/>
                     </Border>
                     <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="Dr. João Silva" FontSize="22" FontWeight="Bold" Foreground="White"/>
-                        <TextBlock Text="CRM 123456" FontSize="15" Foreground="#E0F7FA"/>
+                        <TextBlock x:Name="txtHeaderName" Text="Dr. João Silva" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                        <TextBlock x:Name="txtHeaderCRM" Text="CRM 123456" FontSize="15" Foreground="#E0F7FA"/>
                     </StackPanel>
                 </StackPanel>
                 <!-- TÍTULO -->
                 <TextBlock Grid.Column="1" Text="Sistema de Laudos Médicos" FontSize="30" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 <!-- USUÁRIO -->
-                <TextBlock Grid.Column="2" Text="Bem-vindo, Dr. João" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                <TextBlock Grid.Column="2" x:Name="txtWelcome" Text="Bem-vindo, Dr. João" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0"/>
             </Grid>
         </Border>
         <!-- CONTEÚDO -->
@@ -99,26 +99,18 @@
                             </TreeViewItem.Header>
 
                             <TreeViewItem Header="Pacientes">
-
-                                <TreeViewItem Header="Buscar um Paciente"
-                                      Selected="BuscarPaciente_Click"/>
-
-                                <TreeViewItem Header="Buscar todos Paciente"
-                                      Selected="BuscarTodosPacientes_Click"/>
-
+                                <TreeViewItem Header="Buscar um paciente" Selected="BuscarPaciente_Click"/>
+                                <TreeViewItem Header="Buscar todos os pacientes" Selected="BuscarTodosPacientes_Click"/>
                             </TreeViewItem>
 
                             <TreeViewItem Header="Exames">
                                 <TreeViewItem Header="Buscar um Exame de um paciente"
                                       Selected="BuscarExamePaciente_Click"/>
-
-                                <TreeViewItem Header="Buscar todos os exames"
-                                      Selected="BuscarTodosExames_Click"/>
-
                                 <TreeViewItem Header="Buscar todos os exames de um paciente"
                                       Selected="BuscarTodosExamesPaciente_Click"/>
 
-                                <TreeViewItem Header="Listar Exames" Selected="ListarExames_Click"/>
+                                <TreeViewItem Header="Buscar todos os exames"
+                                      Selected="BuscarTodosExames_Click"/>
 
                             </TreeViewItem>
 
@@ -137,12 +129,12 @@
 
                         </TreeViewItem>
 
-                        <!-- INÍCIO -->
+                        <!-- Início -->
                         <TreeViewItem>
                             <TreeViewItem.Header>
-                                <TextBlock Text="Retorna ao Painel" FontWeight="Bold" />
+                                <TextBlock Text="Início" FontWeight="Bold" />
                             </TreeViewItem.Header>
-                            <TreeViewItem Header="Painel Principal" Selected="Inicio_Click" />
+                            <TreeViewItem Header="Painel principal" Selected="Inicio_Click" />
                         </TreeViewItem>
 
                         <!-- CONTA -->

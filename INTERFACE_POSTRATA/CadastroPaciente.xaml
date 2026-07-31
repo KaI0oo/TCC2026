@@ -128,7 +128,7 @@
 
                             <TextBlock Text="CEP"
                                        FontSize="20"/>
-                            <TextBox x:Name="txtCEP" Height="35" Width="200" FontSize="18" Margin="0,5,0,15" PreviewTextInput="DigitsOnly_PreviewTextInput" LostFocus="TxtCEP_LostFocus" />
+                            <TextBox x:Name="txtCEP" Height="35" Width="200" FontSize="18" Margin="0,5,0,15" PreviewTextInput="DigitsOnly_PreviewTextInput" LostFocus="TxtCEP_LostFocus" HorizontalAlignment="Left"/>
 
                             <TextBlock Text="Endereço"
                                        FontSize="20"/>

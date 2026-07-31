@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("INTERFACE_POSTRATA")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+496a4f1f4e6318a6443095890f6160e7654f7fca")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+713f88813941ec9603ffa223e0ec6381ca6557ed")]
 [assembly: System.Reflection.AssemblyProductAttribute("INTERFACE_POSTRATA")]
 [assembly: System.Reflection.AssemblyTitleAttribute("INTERFACE_POSTRATA")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
