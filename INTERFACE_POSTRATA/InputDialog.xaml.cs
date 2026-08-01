@@ -5,6 +5,11 @@ namespace INTERFACE_POSTRATA
     public partial class InputDialog : Window
     {
         public string Valor { get; private set; }
+        public string Prompt
+        {
+            get => txtPrompt?.Text ?? string.Empty;
+            set { if (txtPrompt != null) txtPrompt.Text = value; }
+        }
 
         public InputDialog()
         {

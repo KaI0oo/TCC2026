@@ -57,99 +57,85 @@
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
 
-                    <TreeView BorderThickness="0"
+                    <TreeView x:Name="tvMenu" BorderThickness="0"
                       Background="White"
                       FontSize="26">
 
-                        <!-- CADASTRO -->
-
-                        <TreeViewItem IsExpanded="True">
-                            <TreeViewItem.Header>
-                                <TextBlock Text="Cadastro" FontWeight="Bold" />
-                            </TreeViewItem.Header>
-
-                            <TreeViewItem Header="Cadastrar Paciente"
-                                  Selected="CadastrarPaciente_Click"/>
-
-                            <TreeViewItem Header="Cadastrar Anamnese"
-                                  Selected="CadastrarAnamnese_Click"/>
-
-                            <TreeViewItem Header="Cadastrar Exame"
-                                  Selected="CadastrarExame_Click"/>
-
-                        </TreeViewItem>
-
-                        <!-- LAUDOS (removido do topo - acessível via Consultas) -->
-                        <!-- IA -->
-
-                        <TreeViewItem IsExpanded="True">
-                            <TreeViewItem.Header>
-                                <TextBlock Text="IA" FontWeight="Bold" />
-                            </TreeViewItem.Header>
-
-                            <TreeViewItem Header="Treinar IA"
-                  Selected="TreinarIA_Click"/>
-
-                        </TreeViewItem>
-                        <!-- CONSULTAS -->
-
-                        <TreeViewItem IsExpanded="True">
-                            <TreeViewItem.Header>
-                                <TextBlock Text="Consultas" FontWeight="Bold" />
-                            </TreeViewItem.Header>
-
-                            <TreeViewItem Header="Pacientes">
-                                <TreeViewItem Header="Buscar um paciente" Selected="BuscarPaciente_Click"/>
-                                <TreeViewItem Header="Buscar todos os pacientes" Selected="BuscarTodosPacientes_Click"/>
-                            </TreeViewItem>
-
-                            <TreeViewItem Header="Exames">
-                                <TreeViewItem Header="Buscar um Exame de um paciente"
-                                      Selected="BuscarExamePaciente_Click"/>
-                                <TreeViewItem Header="Buscar todos os exames de um paciente"
-                                      Selected="BuscarTodosExamesPaciente_Click"/>
-
-                                <TreeViewItem Header="Buscar todos os exames"
-                                      Selected="BuscarTodosExames_Click"/>
-
-                            </TreeViewItem>
-
-                            <TreeViewItem Header="Laudos">
-
-                                <TreeViewItem Header="Buscar um Laudo de um paciente"
-                                      Selected="BuscarLaudoPaciente_Click"/>
-
-                                <TreeViewItem Header="Buscar todos os laudos de um paciente"
-                                      Selected="BuscarTodosLaudosPaciente_Click"/>
-
-                                <TreeViewItem Header="Buscar todos os laudos"
-                                      Selected="BuscarTodosLaudos_Click"/>
-
-                            </TreeViewItem>
-
-                        </TreeViewItem>
-
                         <!-- Início -->
-                        <TreeViewItem>
+                        <TreeViewItem x:Name="tvInicioGroup" IsExpanded="True">
                             <TreeViewItem.Header>
                                 <TextBlock Text="Início" FontWeight="Bold" />
                             </TreeViewItem.Header>
                             <TreeViewItem Header="Painel principal" Selected="Inicio_Click" />
                         </TreeViewItem>
 
-                        <!-- CONTA -->
+                        <!-- CADASTRO -->
+                        <TreeViewItem x:Name="tvCadastroGroup" IsExpanded="True">
+                            <TreeViewItem.Header>
+                                <TextBlock Text="Cadastro" FontWeight="Bold" />
+                            </TreeViewItem.Header>
+                            <TreeViewItem Header="Cadastrar Paciente" Selected="CadastrarPaciente_Click"/>
+                            <TreeViewItem Header="Cadastrar Anamnese" Selected="CadastrarAnamnese_Click"/>
+                            <TreeViewItem Header="Cadastrar Exame" Selected="CadastrarExame_Click"/>
+                        </TreeViewItem>
 
-                        <TreeViewItem IsExpanded="True">
+                        <!-- CONSULTAS -->
+                        <TreeViewItem x:Name="tvConsultasGroup" IsExpanded="True">
+                            <TreeViewItem.Header>
+                                <TextBlock Text="Consulta" FontWeight="Bold" />
+                            </TreeViewItem.Header>
+                            <TreeViewItem Header="Buscar Paciente">
+                                <TreeViewItem Header="Buscar um paciente" Selected="BuscarPaciente_Click"/>
+                                <TreeViewItem Header="Buscar todos os pacientes" Selected="BuscarTodosPacientes_Click"/>
+                            </TreeViewItem>
+                            <TreeViewItem Header="Buscar Exame">
+                                <TreeViewItem Header="Buscar um Exame de um paciente" Selected="BuscarExamePaciente_Click"/>
+                                <TreeViewItem Header="Buscar todos os exames de um paciente" Selected="BuscarTodosExamesPaciente_Click"/>
+                                <TreeViewItem Header="Buscar todos os exames" Selected="BuscarTodosExames_Click"/>
+                            </TreeViewItem>
+                            <TreeViewItem Header="Buscar Laudo">
+                                <TreeViewItem Header="Buscar um Laudo de um paciente" Selected="BuscarLaudoPaciente_Click"/>
+                                <TreeViewItem Header="Buscar todos os laudos de um paciente" Selected="BuscarTodosLaudosPaciente_Click"/>
+                                <TreeViewItem Header="Buscar todos os laudos" Selected="BuscarTodosLaudos_Click"/>
+                            </TreeViewItem>
+                        </TreeViewItem>
+
+                        <!-- EDIÇÃO -->
+                        <TreeViewItem x:Name="tvEdicaoGroup" IsExpanded="True">
+                            <TreeViewItem.Header>
+                                <TextBlock Text="Edição" FontWeight="Bold" />
+                            </TreeViewItem.Header>
+                            <TreeViewItem Header="Editar Paciente" Selected="EditarPaciente_Click"/>
+                            <TreeViewItem Header="Editar Anamnese" Selected="EditarAnamnese_Click"/>
+                            <TreeViewItem Header="Editar Exame" Selected="EditarExame_Click"/>
+                        </TreeViewItem>
+
+                        <!-- EXCLUSÃO -->
+                        <TreeViewItem x:Name="tvExclusaoGroup" IsExpanded="True">
+                            <TreeViewItem.Header>
+                                <TextBlock Text="Exclusão" FontWeight="Bold" />
+                            </TreeViewItem.Header>
+                            <TreeViewItem Header="Excluir Paciente" Selected="ExcluirPaciente_Click"/>
+                            <TreeViewItem Header="Excluir Anamnese" Selected="ExcluirAnamnese_Click"/>
+                            <TreeViewItem Header="Excluir Exame" Selected="ExcluirExame_Click"/>
+                            <TreeViewItem Header="Excluir Laudo" Selected="ExcluirLaudo_Click"/>
+                        </TreeViewItem>
+
+                        <!-- Inteligência Artificial -->
+                        <TreeViewItem x:Name="tvIAGroup" IsExpanded="True">
+                            <TreeViewItem.Header>
+                                <TextBlock Text="Inteligência Artificial" FontWeight="Bold" />
+                            </TreeViewItem.Header>
+                            <TreeViewItem Header="Treinar IA" Selected="TreinarIA_Click"/>
+                        </TreeViewItem>
+
+                        <!-- CONTA -->
+                        <TreeViewItem x:Name="tvContaGroup" IsExpanded="True">
                             <TreeViewItem.Header>
                                 <TextBlock Text="Conta" FontWeight="Bold" />
                             </TreeViewItem.Header>
-
-                            <TreeViewItem Header="Logout"
-                                  Selected="Logout_Click"/>
-
-                            <TreeViewItem Header="Sair"
-                                  Selected="Sair_Click"/>
-
+                            <TreeViewItem Header="Logout" Selected="Logout_Click"/>
+                            <TreeViewItem Header="Fechar Programa" Selected="Sair_Click"/>
                         </TreeViewItem>
 
                     </TreeView>

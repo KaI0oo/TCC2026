@@ -21,6 +21,7 @@ namespace INTERFACE_POSTRATA
     /// </summary>
     public partial class CadastroPaciente : Window
     {
+        private string? _editingCpf = null;
         private readonly Dictionary<string, string> _prevText = new Dictionary<string, string>();
         private readonly Dictionary<string, int> _lastSelection = new Dictionary<string, int>();
         private bool alterando = false;
@@ -31,6 +32,41 @@ namespace INTERFACE_POSTRATA
             txtNascimento.PreviewKeyDown += TxtNascimento_PreviewKeyDown;
             txtNascimento.PreviewTextInput += TxtNascimento_PreviewTextInput;
             DataObject.AddPastingHandler(txtNascimento, OnTxtNascimentoPasting);
+        }
+
+        public CadastroPaciente(string cpf)
+        {
+            InitializeComponent();
+            // carregar dados do paciente para edição
+            if (!string.IsNullOrWhiteSpace(cpf))
+            {
+                try
+                {
+                    using (var conn = Conexao.ObterConexao())
+                    {
+                        using (var cmd = new MySqlCommand("SELECT cpf, nome, idade, sexo, data_nascimento, raca, telefone, endereco, tipo_sanguineo, rm_medico FROM paciente WHERE cpf = @cpf", conn))
+                        {
+                            cmd.Parameters.AddWithValue("@cpf", cpf);
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                if (reader.Read())
+                                {
+                                    _editingCpf = reader["cpf"]?.ToString();
+                                    txtCPF.Text = _editingCpf;
+                                    txtCPF.IsEnabled = false;
+                                    txtNome.Text = reader["nome"]?.ToString() ?? string.Empty;
+                                    txtIdade.Text = reader["idade"]?.ToString() ?? string.Empty;
+                                    txtTelefone.Text = reader["telefone"]?.ToString() ?? string.Empty;
+                                    txtEndereco.Text = reader["endereco"]?.ToString() ?? string.Empty;
+                                    txtNascimento.Text = reader["data_nascimento"] != DBNull.Value ? Convert.ToDateTime(reader["data_nascimento"]).ToString("dd/MM/yyyy") : string.Empty;
+                                    // ajustar sexo, raca, sangue e medico se necessário
+                                }
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
         }
 
         private void TxtNascimento_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -178,80 +214,141 @@ namespace INTERFACE_POSTRATA
 
                 using (MySqlConnection conn = Conexao.ObterConexao())
                 {
-                    string sql =
-                        @"INSERT INTO paciente
-                    (
-                        cpf,
-                        nome,
-                        idade,
-                        sexo,
-                        data_nascimento,
-                        raca,
-                        telefone,
-                        endereco,
-                        tipo_sanguineo,
-                        rm_medico
-                    )
-                    VALUES
-                    (
-                        @cpf,
-                        @nome,
-                        @idade,
-                        @sexo,
-                        @data,
-                        @raca,
-                        @telefone,
-                        @endereco,
-                        @sangue,
-                        @medico
-                    )";
-
-                    using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                    if (!string.IsNullOrWhiteSpace(_editingCpf))
                     {
-                        cmd.Parameters.AddWithValue("@cpf", cpf);
-                        cmd.Parameters.AddWithValue("@nome", nome);
-                        cmd.Parameters.AddWithValue("@idade", idade);
+                        // UPDATE
+                        string sql = @"UPDATE paciente SET
+                            nome = @nome,
+                            idade = @idade,
+                            sexo = @sexo,
+                            data_nascimento = @data,
+                            raca = @raca,
+                            telefone = @telefone,
+                            endereco = @endereco,
+                            tipo_sanguineo = @sangue,
+                            rm_medico = @medico
+                            WHERE cpf = @cpf";
 
-                        cmd.Parameters.AddWithValue(
-                            "@sexo",
-                            ((ComboBoxItem)cbSexo.SelectedItem)?.Content?.ToString() ?? string.Empty
-                        );
-
-                        // data de nascimento: tentar parse do campo txtNascimento (DD/MM/AA)
-                        object dataParam = System.DBNull.Value;
-                        try
+                        using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                         {
-                            string digits = new string((txtNascimento.Text ?? string.Empty).Where(char.IsDigit).ToArray());
-                            if (digits.Length >= 6)
+                            cmd.Parameters.AddWithValue("@cpf", _editingCpf);
+                            cmd.Parameters.AddWithValue("@nome", nome);
+                            cmd.Parameters.AddWithValue("@idade", idade);
+                            cmd.Parameters.AddWithValue(
+                                "@sexo",
+                                ((ComboBoxItem)cbSexo.SelectedItem)?.Content?.ToString() ?? string.Empty
+                            );
+
+                            // data de nascimento: tentar parse do campo txtNascimento (DD/MM/AA)
+                            object dataParam = System.DBNull.Value;
+                            try
                             {
-                                string dd = digits.Substring(0, 2);
-                                string mm = digits.Substring(2, 2);
-                                string aa = digits.Substring(4, 2);
-                                if (int.TryParse(dd, out int day) && int.TryParse(mm, out int month) && int.TryParse(aa, out int year2))
+                                string digits = new string((txtNascimento.Text ?? string.Empty).Where(char.IsDigit).ToArray());
+                                if (digits.Length >= 6)
                                 {
-                                    int yearFull = year2 + (year2 <= DateTime.Now.Year % 100 ? 2000 : 1900);
-                                    dataParam = new DateTime(yearFull, month, day);
+                                    string dd = digits.Substring(0, 2);
+                                    string mm = digits.Substring(2, 2);
+                                    string aa = digits.Substring(4, 2);
+                                    if (int.TryParse(dd, out int day) && int.TryParse(mm, out int month) && int.TryParse(aa, out int year2))
+                                    {
+                                        int yearFull = year2 + (year2 <= DateTime.Now.Year % 100 ? 2000 : 1900);
+                                        dataParam = new DateTime(yearFull, month, day);
+                                    }
                                 }
                             }
+                            catch { dataParam = System.DBNull.Value; }
+
+                            cmd.Parameters.AddWithValue("@data", dataParam);
+
+                            // raça via ComboBox
+                            cmd.Parameters.AddWithValue("@raca", ((ComboBoxItem)cbRaca.SelectedItem)?.Content?.ToString() ?? string.Empty);
+                            cmd.Parameters.AddWithValue("@telefone", telefone);
+                            cmd.Parameters.AddWithValue("@endereco", txtEndereco.Text);
+
+                            cmd.Parameters.AddWithValue(
+                                "@sangue",
+                                ((ComboBoxItem)cbSangue.SelectedItem)?.Content?.ToString() ?? string.Empty
+                            );
+
+                            // médico logado
+                            cmd.Parameters.AddWithValue("@medico", INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId ?? 0);
+
+                            cmd.ExecuteNonQuery();
                         }
-                        catch { dataParam = System.DBNull.Value; }
+                    }
+                    else
+                    {
+                        string sql =
+                            @"INSERT INTO paciente
+                        (
+                            cpf,
+                            nome,
+                            idade,
+                            sexo,
+                            data_nascimento,
+                            raca,
+                            telefone,
+                            endereco,
+                            tipo_sanguineo,
+                            rm_medico
+                        )
+                        VALUES
+                        (
+                            @cpf,
+                            @nome,
+                            @idade,
+                            @sexo,
+                            @data,
+                            @raca,
+                            @telefone,
+                            @endereco,
+                            @sangue,
+                            @medico
+                        )";
 
-                        cmd.Parameters.AddWithValue("@data", dataParam);
+                        using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@cpf", cpf);
+                            cmd.Parameters.AddWithValue("@nome", nome);
+                            cmd.Parameters.AddWithValue("@idade", idade);
 
-                        // raça via ComboBox
-                        cmd.Parameters.AddWithValue("@raca", ((ComboBoxItem)cbRaca.SelectedItem)?.Content?.ToString() ?? string.Empty);
-                        cmd.Parameters.AddWithValue("@telefone", telefone);
-                        cmd.Parameters.AddWithValue("@endereco", txtEndereco.Text);
+                            cmd.Parameters.AddWithValue(
+                                "@sexo",
+                                ((ComboBoxItem)cbSexo.SelectedItem)?.Content?.ToString() ?? string.Empty
+                            );
 
-                        cmd.Parameters.AddWithValue(
-                            "@sangue",
-                            ((ComboBoxItem)cbSangue.SelectedItem)?.Content?.ToString() ?? string.Empty
-                        );
+                            // data de nascimento: tentar parse do campo txtNascimento (DD/MM/AA)
+                            object dataParam = System.DBNull.Value;
+                            try
+                            {
+                                string digits = new string((txtNascimento.Text ?? string.Empty).Where(char.IsDigit).ToArray());
+                                if (digits.Length >= 6)
+                                {
+                                    string dd = digits.Substring(0, 2);
+                                    string mm = digits.Substring(2, 2);
+                                    string aa = digits.Substring(4, 2);
+                                    if (int.TryParse(dd, out int day) && int.TryParse(mm, out int month) && int.TryParse(aa, out int year2))
+                                    {
+                                        int yearFull = year2 + (year2 <= DateTime.Now.Year % 100 ? 2000 : 1900);
+                                        dataParam = new DateTime(yearFull, month, day);
+                                    }
+                                }
+                            }
+                            catch { dataParam = System.DBNull.Value; }
 
-                        // médico logado
-                        cmd.Parameters.AddWithValue("@medico", INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId ?? 0);
+                            cmd.Parameters.AddWithValue("@data", dataParam);
 
-                        cmd.ExecuteNonQuery();
+                            cmd.Parameters.AddWithValue("@raca", ((ComboBoxItem)cbRaca.SelectedItem)?.Content?.ToString() ?? string.Empty);
+                            cmd.Parameters.AddWithValue("@telefone", telefone);
+                            cmd.Parameters.AddWithValue("@endereco", txtEndereco.Text);
+                            cmd.Parameters.AddWithValue(
+                                "@sangue",
+                                ((ComboBoxItem)cbSangue.SelectedItem)?.Content?.ToString() ?? string.Empty
+                            );
+                            cmd.Parameters.AddWithValue("@medico", INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId ?? 0);
+
+                            cmd.ExecuteNonQuery();
+                        }
                     }
 
                     // conn será fechado automaticamente pelo using

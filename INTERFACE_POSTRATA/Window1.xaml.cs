@@ -56,6 +56,93 @@ namespace INTERFACE_POSTRATA
                 }
             }
             catch { }
+
+            // configurar visibilidade do menu conforme cargo
+            ConfigureMenuByRole();
+        }
+
+        private void ConfigureMenuByRole()
+        {
+            try
+            {
+                var cargo = INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoCargo ?? string.Empty;
+                bool isMedico = cargo.Equals("MEDICO", System.StringComparison.OrdinalIgnoreCase);
+                bool isSecretaria = cargo.Equals("SECRETARIA", System.StringComparison.OrdinalIgnoreCase);
+
+                // Mostrar/ocultar grupos
+                var cadastro = this.FindName("tvCadastroGroup") as System.Windows.Controls.TreeViewItem;
+                var ia = this.FindName("tvIAGroup") as System.Windows.Controls.TreeViewItem;
+                var consultas = this.FindName("tvConsultasGroup") as System.Windows.Controls.TreeViewItem;
+                var edicao = this.FindName("tvEdicaoGroup") as System.Windows.Controls.TreeViewItem;
+                var exclusao = this.FindName("tvExclusaoGroup") as System.Windows.Controls.TreeViewItem;
+                var conta = this.FindName("tvContaGroup") as System.Windows.Controls.TreeViewItem;
+                var inicio = this.FindName("tvInicioGroup") as System.Windows.Controls.TreeViewItem;
+
+                if (isMedico)
+                {
+                    // médico vê tudo
+                    if (cadastro != null) cadastro.Visibility = System.Windows.Visibility.Visible;
+                    if (ia != null) ia.Visibility = System.Windows.Visibility.Visible;
+                    if (consultas != null) consultas.Visibility = System.Windows.Visibility.Visible;
+                    if (edicao != null) edicao.Visibility = System.Windows.Visibility.Visible;
+                    if (exclusao != null) exclusao.Visibility = System.Windows.Visibility.Visible;
+                    if (conta != null) conta.Visibility = System.Windows.Visibility.Visible;
+                    if (inicio != null) inicio.Visibility = System.Windows.Visibility.Visible;
+                }
+                else if (isSecretaria)
+                {
+                    // secretária: manter apenas Início, Cadastro->Cadastrar Paciente e Conta
+                    if (cadastro != null)
+                    {
+                        // esconder todos itens, exceto o primeiro (Cadastrar Paciente)
+                        foreach (var item in cadastro.Items)
+                        {
+                            if (item is System.Windows.Controls.TreeViewItem t)
+                            {
+                                t.Visibility = System.Windows.Visibility.Collapsed;
+                            }
+                        }
+                        // exibir somente primeiro
+                        if (cadastro.Items.Count > 0 && cadastro.Items[0] is System.Windows.Controls.TreeViewItem first)
+                            first.Visibility = System.Windows.Visibility.Visible;
+                    }
+                    if (ia != null) ia.Visibility = System.Windows.Visibility.Collapsed;
+                    if (consultas != null) consultationsHide(consultas);
+                    if (edicao != null) edicao.Visibility = System.Windows.Visibility.Collapsed;
+                    if (exclusao != null) exclusao.Visibility = System.Windows.Visibility.Collapsed;
+                    if (conta != null) conta.Visibility = System.Windows.Visibility.Visible;
+                    if (inicio != null) inicio.Visibility = System.Windows.Visibility.Visible;
+                }
+                else
+                {
+                    // padrão: mostrar tudo
+                    if (cadastro != null) cadastro.Visibility = System.Windows.Visibility.Visible;
+                    if (ia != null) ia.Visibility = System.Windows.Visibility.Visible;
+                    if (consultas != null) consultationsShow(consultas);
+                    if (edicao != null) edicao.Visibility = System.Windows.Visibility.Visible;
+                    if (exclusao != null) exclusao.Visibility = System.Windows.Visibility.Visible;
+                    if (conta != null) conta.Visibility = System.Windows.Visibility.Visible;
+                    if (inicio != null) inicio.Visibility = System.Windows.Visibility.Visible;
+                }
+            }
+            catch { }
+        }
+
+        private void consultationsHide(System.Windows.Controls.TreeViewItem consultas)
+        {
+            // hide all children
+            foreach (var it in consultas.Items)
+            {
+                if (it is System.Windows.Controls.TreeViewItem t) t.Visibility = System.Windows.Visibility.Collapsed;
+            }
+        }
+
+        private void consultationsShow(System.Windows.Controls.TreeViewItem consultas)
+        {
+            foreach (var it in consultas.Items)
+            {
+                if (it is System.Windows.Controls.TreeViewItem t) t.Visibility = System.Windows.Visibility.Visible;
+            }
         }
 
         // CADASTRO
@@ -91,6 +178,7 @@ namespace INTERFACE_POSTRATA
             // Abrir diálogo para digitar CPF e mostrar apenas esse paciente
             var input = new InputDialog();
             input.Owner = this;
+            input.Prompt = "Digite o CPF do paciente:";
             if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
             {
                 var ctrl = new ListarPacientesControl();
@@ -110,6 +198,7 @@ namespace INTERFACE_POSTRATA
         {
             var input = new InputDialog();
             input.Owner = this;
+            input.Prompt = "Digite o CPF do paciente:";
             if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
             {
                 var ctrl = new ListarExamesControl();
@@ -127,6 +216,7 @@ namespace INTERFACE_POSTRATA
         {
             var input = new InputDialog();
             input.Owner = this;
+            input.Prompt = "Digite o CPF do paciente:";
             if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
             {
                 var ctrl = new ListarExamesControl();
@@ -182,6 +272,189 @@ namespace INTERFACE_POSTRATA
             var login = new MainWindow();
             login.Show();
             this.Close();
+        }
+
+        // EDIÇÃO
+        private void EditarPaciente_Click(object sender, RoutedEventArgs e)
+        {
+            var input = new InputDialog();
+            input.Owner = this;
+            input.Prompt = "Informe o CPF do paciente a editar:";
+            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
+            {
+                var win = new CadastroPaciente(input.Valor);
+                win.Show();
+            }
+        }
+
+        private void EditarAnamnese_Click(object sender, RoutedEventArgs e)
+        {
+            var input = new InputDialog();
+            input.Owner = this;
+            input.Prompt = "Informe o CPF do paciente para carregar anamneses:";
+            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
+            {
+                var ctrl = new ListarAnamnesesControl();
+                ctrl.CarregarAnamneses(input.Valor);
+                SetMainContent(ctrl);
+            }
+        }
+
+        private void EditarExame_Click(object sender, RoutedEventArgs e)
+        {
+            var input = new InputDialog();
+            input.Owner = this;
+            input.Prompt = "Informe o CPF do paciente para carregar exames:";
+            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
+            {
+                var ctrl = new ListarExamesControl();
+                ctrl.CarregarExames(input.Valor);
+                SetMainContent(ctrl);
+            }
+        }
+
+        // EXCLUSÃO
+        private void ExcluirPaciente_Click(object sender, RoutedEventArgs e)
+        {
+            var input = new InputDialog();
+            input.Owner = this;
+            input.Prompt = "Informe o CPF do paciente a excluir:";
+            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
+            {
+                string cpf = input.Valor;
+                var confirm = MessageBox.Show($"Confirma exclusão do paciente {cpf}? Todos os exames e laudos relacionados serão removidos.", "Confirmar exclusão", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (confirm != MessageBoxResult.Yes) return;
+
+                try
+                {
+                    using (var conn = Conexao.ObterConexao())
+                    using (var tran = conn.BeginTransaction())
+                    {
+                        // deletar laudos relacionados
+                        using (var cmd = new MySqlCommand("DELETE l FROM laudo l JOIN exame e ON l.id_exame = e.id_exame WHERE e.cpf_paciente = @cpf", conn, tran))
+                        {
+                            cmd.Parameters.AddWithValue("@cpf", cpf);
+                            cmd.ExecuteNonQuery();
+                        }
+                        // deletar exames
+                        using (var cmd2 = new MySqlCommand("DELETE FROM exame WHERE cpf_paciente = @cpf", conn, tran))
+                        {
+                            cmd2.Parameters.AddWithValue("@cpf", cpf);
+                            cmd2.ExecuteNonQuery();
+                        }
+                        // deletar anamneses
+                        using (var cmd3 = new MySqlCommand("DELETE FROM anamnese WHERE cpf_paciente = @cpf", conn, tran))
+                        {
+                            cmd3.Parameters.AddWithValue("@cpf", cpf);
+                            cmd3.ExecuteNonQuery();
+                        }
+                        // deletar paciente
+                        using (var cmd4 = new MySqlCommand("DELETE FROM paciente WHERE cpf = @cpf", conn, tran))
+                        {
+                            cmd4.Parameters.AddWithValue("@cpf", cpf);
+                            cmd4.ExecuteNonQuery();
+                        }
+
+                        tran.Commit();
+                    }
+
+                    MessageBox.Show("Paciente e registros relacionados excluídos.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao excluir paciente: " + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void ExcluirAnamnese_Click(object sender, RoutedEventArgs e)
+        {
+            var input = new InputDialog();
+            input.Owner = this;
+            input.Prompt = "Informe o ID da anamnese a excluir:";
+            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
+            {
+                if (!int.TryParse(input.Valor, out int id)) { MessageBox.Show("ID inválido."); return; }
+                var confirm = MessageBox.Show($"Confirma exclusão da anamnese {id}?", "Confirmar exclusão", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (confirm != MessageBoxResult.Yes) return;
+                try
+                {
+                    using (var conn = Conexao.ObterConexao())
+                    using (var cmd = new MySqlCommand("DELETE FROM anamnese WHERE id_anamnese = @id", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", id);
+                        cmd.ExecuteNonQuery();
+                    }
+                    MessageBox.Show("Anamnese excluída.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao excluir anamnese: " + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void ExcluirExame_Click(object sender, RoutedEventArgs e)
+        {
+            var input = new InputDialog();
+            input.Owner = this;
+            input.Prompt = "Informe o ID do exame a excluir:";
+            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
+            {
+                if (!int.TryParse(input.Valor, out int id)) { MessageBox.Show("ID inválido."); return; }
+                var confirm = MessageBox.Show($"Confirma exclusão do exame {id}? O laudo associado também será removido.", "Confirmar exclusão", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (confirm != MessageBoxResult.Yes) return;
+                try
+                {
+                    using (var conn = Conexao.ObterConexao())
+                    using (var tran = conn.BeginTransaction())
+                    {
+                        using (var cmd = new MySqlCommand("DELETE FROM laudo WHERE id_exame = @id", conn, tran))
+                        {
+                            cmd.Parameters.AddWithValue("@id", id);
+                            cmd.ExecuteNonQuery();
+                        }
+                        using (var cmd2 = new MySqlCommand("DELETE FROM exame WHERE id_exame = @id", conn, tran))
+                        {
+                            cmd2.Parameters.AddWithValue("@id", id);
+                            cmd2.ExecuteNonQuery();
+                        }
+                        tran.Commit();
+                    }
+                    MessageBox.Show("Exame e laudo associados excluídos.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao excluir exame: " + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void ExcluirLaudo_Click(object sender, RoutedEventArgs e)
+        {
+            var input = new InputDialog();
+            input.Owner = this;
+            input.Prompt = "Informe o ID do laudo a excluir:";
+            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
+            {
+                if (!int.TryParse(input.Valor, out int id)) { MessageBox.Show("ID inválido."); return; }
+                var confirm = MessageBox.Show($"Confirma exclusão do laudo {id}?", "Confirmar exclusão", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (confirm != MessageBoxResult.Yes) return;
+                try
+                {
+                    using (var conn = Conexao.ObterConexao())
+                    using (var cmd = new MySqlCommand("DELETE FROM laudo WHERE id_laudo = @id", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", id);
+                        cmd.ExecuteNonQuery();
+                    }
+                    MessageBox.Show("Laudo excluído.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao excluir laudo: " + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
         private void Sair_Click(object sender, RoutedEventArgs e)
