@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="INTERFACE_POSTRATA\**" />
+    <EmbeddedResource Remove="INTERFACE_POSTRATA\**" />
+    <None Remove="INTERFACE_POSTRATA\**" />
+    <Page Remove="INTERFACE_POSTRATA\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MySql.Data" Version="9.7.0" />
+  </ItemGroup>
+
+  <!-- appsettings.json não é obrigatório; a classe Conexao faz fallback para valores padrão se não existir -->
+
+</Project>

@@ -1,0 +1,33 @@
+<Window x:Class="INTERFACE_POSTRATA.AlterarRHPrincipal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Alterar RH Principal"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid Background="#F4FDFD">
+        <Border Background="White" Margin="30" CornerRadius="8">
+            <StackPanel Margin="30">
+                <TextBlock Text="Alterar RH Principal" FontSize="26" FontWeight="Bold" Foreground="#00838F" HorizontalAlignment="Center" />
+                <TextBlock Text="Atenção: somente um RH Principal pode existir. Informe o RM do funcionário que será promovido a RH." Margin="0,10,0,20" TextWrapping="Wrap" />
+
+                <TextBlock Text="RM do Funcionário a ser promovido" />
+                <TextBox x:Name="txtTargetRM" Height="32" Width="300" />
+
+                <TextBlock Text="Nome (opcional)" Margin="0,8,0,0" />
+                <TextBox x:Name="txtTargetNome" Height="32" Width="500" />
+
+                <TextBlock Text="CRM (opcional)" Margin="0,8,0,0" />
+                <TextBox x:Name="txtTargetCRM" Height="32" Width="300" />
+
+                <TextBlock Text="Senha do RH atual (confirmação)" Margin="0,8,0,0" />
+                <PasswordBox x:Name="txtCurrentRHPassword" Height="32" Width="300" />
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                    <Button Content="Confirmar" Width="140" Height="36" Background="#00838F" Foreground="White" Click="Confirmar_Click" />
+                    <Button Content="Cancelar" Width="120" Height="36" Margin="10,0,0,0" Click="Cancelar_Click" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

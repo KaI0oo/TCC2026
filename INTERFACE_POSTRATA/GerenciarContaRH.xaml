@@ -1,0 +1,108 @@
+<Window x:Class="INTERFACE_POSTRATA.GerenciarContaRH"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Gerenciar Contas - RH"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid Background="#F4FDFD">
+
+        <Border Background="White" Margin="20" CornerRadius="8">
+
+            <Grid Margin="20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="80" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Cabeçalho -->
+                <Border Grid.Row="0" Background="#00BCD4" CornerRadius="6">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20">
+                        <TextBlock Text="Gerenciar Contas" FontSize="26" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Conteúdo -->
+                <Grid Grid.Row="1" Margin="0,20,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Lista e busca -->
+                    <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBox x:Name="txtSearch" Width="300" Height="34" FontSize="16" Margin="0,0,10,0" />
+                            <Button Content="Pesquisar" Width="120" Height="34" Background="#00838F" Foreground="White" Click="Pesquisar_Click" />
+                            <Button Content="Limpar" Width="100" Height="34" Margin="10,0,0,0" Click="LimparPesquisa_Click" />
+                        </StackPanel>
+
+                        <DataGrid x:Name="dgUsers" AutoGenerateColumns="False" Margin="0,10,0,0" SelectionMode="Single" SelectionChanged="DgUsers_SelectionChanged">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="RM" Binding="{Binding RM}" Width="80" />
+                                <DataGridTextColumn Header="Nome" Binding="{Binding Nome}" Width="*" />
+                                <DataGridTextColumn Header="CRM" Binding="{Binding CRM}" Width="150" />
+                                <DataGridTextColumn Header="Cargo" Binding="{Binding Cargo}" Width="120" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Content="Novo Usuário" Width="140" Height="36" Background="#00BCD4" Foreground="White" Click="NovoUsuario_Click" />
+                            <Button Content="Excluir" Width="120" Height="36" Margin="10,0,0,0" Background="#E53935" Foreground="White" Click="ExcluirUsuario_Click" />
+                            <Button Content="Fechar" Width="120" Height="36" Margin="10,0,0,0" Click="Fechar_Click" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Edição / Detalhes -->
+                    <Border Grid.Column="1" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="6" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="Detalhes do Usuário" FontSize="20" FontWeight="Bold" Margin="0,0,0,10" />
+
+                            <TextBlock Text="RM" />
+                            <TextBox x:Name="txtRM" Height="32" IsEnabled="True" />
+
+                            <TextBlock Text="Nome" Margin="0,8,0,0" />
+                            <TextBox x:Name="txtNome" Height="32" />
+
+                            <TextBlock Text="CRM" Margin="0,8,0,0" />
+                            <TextBox x:Name="txtCRM" Height="32" />
+
+
+
+                            <TextBlock Text="Cargo" Margin="0,8,0,0" />
+                            <ComboBox x:Name="cbCargo" Height="32">
+                                <ComboBoxItem>RH</ComboBoxItem>
+                                <ComboBoxItem>MEDICO</ComboBoxItem>
+                                <ComboBoxItem>SECRETARIA</ComboBoxItem>
+                            </ComboBox>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                <Button x:Name="btnAlterarSenha" Content="Alterar Senha" Width="140" Height="36" Background="#607D8B" Foreground="White" Click="AlterarSenha_Click" IsEnabled="False" />
+                                <Button Content="Salvar" Width="120" Height="36" Background="#00838F" Foreground="White" Click="SalvarUsuario_Click" Margin="10,0,0,0" />
+                                <Button Content="Cancelar" Width="120" Height="36" Margin="10,0,0,0" Click="CancelarEdicao_Click" />
+                            </StackPanel>
+
+                            <!-- Painel para alterar senha (inicialmente oculto) -->
+                            <StackPanel x:Name="spChangePwd" Visibility="Collapsed" Margin="0,12,0,0">
+                                <TextBlock Text="Nova Senha" />
+                                <PasswordBox x:Name="txtNewSenha" Height="32" />
+                                <TextBlock Text="Confirmar Nova Senha" Margin="0,8,0,0" />
+                                <PasswordBox x:Name="txtConfirmSenha" Height="32" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                                    <Button Content="Salvar Senha" Width="140" Height="36" Background="#00838F" Foreground="White" Click="SalvarNovaSenha_Click" />
+                                    <Button Content="Cancelar" Width="120" Height="36" Margin="10,0,0,0" Click="CancelarNovaSenha_Click" />
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+
+        </Border>
+
+    </Grid>
+
+</Window>

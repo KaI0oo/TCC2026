@@ -1,0 +1,25 @@
+/* Estilos para Laudo Médico */
+body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 0; padding: 0; }
+.laudo-container { width: 800px; margin: 20px auto; background: #fff; padding: 24px; box-shadow: 0 0 6px rgba(0,0,0,0.1); }
+.laudo-header { display: flex; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 12px; margin-bottom: 12px; }
+.logo { width: 120px; height: 80px; background: #f4f4f4; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#555; margin-right:16px; }
+.clinic-info h1 { margin: 0; font-size: 18px; }
+.clinic-info p { margin: 2px 0 0 0; color: #666; }
+.patient-info h2, .results h2, .conclusion h2 { margin: 8px 0; color:#00796B; }
+.row { display:flex; margin:6px 0; }
+.label { width:160px; font-weight:600; }
+.value { flex:1; }
+.results-table { width:100%; border-collapse: collapse; margin-top:8px; }
+.results-table th, .results-table td { border:1px solid #e0e0e0; padding:8px; text-align:left; }
+.conclusion-box { background:#fafafa; border:1px dashed #ddd; padding:12px; min-height:80px; }
+.laudo-footer { margin-top:24px; display:flex; justify-content:space-between; align-items:center; }
+.signature { text-align:left; }
+.sig-line { border-top:1px solid #000; width:240px; height:1px; margin:18px 0; }
+.print-area button { background:#00BCD4; color:#fff; border:none; padding:10px 18px; font-size:14px; cursor:pointer; border-radius:4px; }
+
+/* Impressão em A4 */
+@media print {
+  body { background: white; }
+  .laudo-container { box-shadow: none; margin: 0; width: auto; }
+  .print-area { display:none; }
+}
