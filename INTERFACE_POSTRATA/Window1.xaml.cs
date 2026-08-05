@@ -55,7 +55,10 @@ namespace INTERFACE_POSTRATA
                         tbWelcome.Text = "Bem-vindo, " + (string.IsNullOrWhiteSpace(prefixo) ? nome : prefixo + " " + nome);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Window1.Session] {ex}");
+            }
 
             // configurar visibilidade do menu conforme cargo
             ConfigureMenuByRole();
@@ -125,7 +128,10 @@ namespace INTERFACE_POSTRATA
                     if (inicio != null) inicio.Visibility = System.Windows.Visibility.Visible;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Window1.ConfigureMenuByRole] {ex}");
+            }
         }
 
         private void consultationsHide(System.Windows.Controls.TreeViewItem consultas)
@@ -198,7 +204,7 @@ namespace INTERFACE_POSTRATA
         {
             var input = new InputDialog();
             input.Owner = this;
-            input.Prompt = "Digite o CPF do paciente:";
+            input.Prompt = "Informe o CPF do paciente para buscar exames:";
             if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
             {
                 var ctrl = new ListarExamesControl();
@@ -216,7 +222,7 @@ namespace INTERFACE_POSTRATA
         {
             var input = new InputDialog();
             input.Owner = this;
-            input.Prompt = "Digite o CPF do paciente:";
+            input.Prompt = "Informe o CPF do paciente (exames):";
             if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
             {
                 var ctrl = new ListarExamesControl();
@@ -239,6 +245,7 @@ namespace INTERFACE_POSTRATA
         {
             var input = new InputDialog();
             input.Owner = this;
+            input.Prompt = "Informe o CPF do paciente para buscar laudos:";
             if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
             {
                 var ctrl = new ListarLaudosControl();
@@ -251,6 +258,7 @@ namespace INTERFACE_POSTRATA
         {
             var input = new InputDialog();
             input.Owner = this;
+            input.Prompt = "Informe o CPF do paciente (laudos):";
             if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
             {
                 var ctrl = new ListarLaudosControl();
@@ -319,51 +327,124 @@ namespace INTERFACE_POSTRATA
             var input = new InputDialog();
             input.Owner = this;
             input.Prompt = "Informe o CPF do paciente a excluir:";
-            if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
-            {
-                string cpf = input.Valor;
-                var confirm = MessageBox.Show($"Confirma exclusão do paciente {cpf}? Todos os exames e laudos relacionados serão removidos.", "Confirmar exclusão", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                if (confirm != MessageBoxResult.Yes) return;
+            if (input.ShowDialog() != true || string.IsNullOrWhiteSpace(input.Valor)) return;
+            string cpf = input.Valor.Trim();
 
-                try
+            // 1ª confirmação
+            var confirm = MessageBox.Show(
+                $"Confirma exclusão do paciente {cpf}?",
+                "Confirmar exclusão",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+            if (confirm != MessageBoxResult.Yes) return;
+
+            // 2ª confirmação — destino dos registros relacionados
+            var cascade = MessageBox.Show(
+                "Como tratar os registros relacionados (anamneses, exames, laudos)?\n\n" +
+                "• Sim — exclui tudo em cascata.\n" +
+                "• Não — mantém os registros como histórico (cpf_paciente = NULL).\n" +
+                "• Cancelar — aborta a exclusão do paciente.",
+                "Registros relacionados",
+                MessageBoxButton.YesNoCancel,
+                MessageBoxImage.Question);
+            if (cascade == MessageBoxResult.Cancel) return;
+
+            bool deleteCascade = cascade == MessageBoxResult.Yes;
+
+            try
+            {
+                using (var conn = Conexao.ObterConexao())
+                using (var tran = conn.BeginTransaction())
                 {
-                    using (var conn = Conexao.ObterConexao())
-                    using (var tran = conn.BeginTransaction())
+                    try
                     {
-                        // deletar laudos relacionados
-                        using (var cmd = new MySqlCommand("DELETE l FROM laudo l JOIN exame e ON l.id_exame = e.id_exame WHERE e.cpf_paciente = @cpf", conn, tran))
+                        if (deleteCascade)
                         {
-                            cmd.Parameters.AddWithValue("@cpf", cpf);
-                            cmd.ExecuteNonQuery();
+                            // remover laudos relacionados
+                            new MySqlCommand(
+                                "DELETE l FROM laudo l JOIN exame e ON l.id_exame = e.id_exame WHERE e.cpf_paciente = @cpf",
+                                conn, tran)
+                                .WithParam("@cpf", cpf)
+                                .ExecuteNonQuery();
+
+                            // remover exames
+                            new MySqlCommand(
+                                "DELETE FROM exame WHERE cpf_paciente = @cpf",
+                                conn, tran)
+                                .WithParam("@cpf", cpf)
+                                .ExecuteNonQuery();
+
+                            // remover anamneses
+                            new MySqlCommand(
+                                "DELETE FROM anamnese WHERE cpf_paciente = @cpf",
+                                conn, tran)
+                                .WithParam("@cpf", cpf)
+                                .ExecuteNonQuery();
                         }
-                        // deletar exames
-                        using (var cmd2 = new MySqlCommand("DELETE FROM exame WHERE cpf_paciente = @cpf", conn, tran))
+                        else
                         {
-                            cmd2.Parameters.AddWithValue("@cpf", cpf);
-                            cmd2.ExecuteNonQuery();
+                            // preservar como histórico: desvincula cpf_paciente
+                            // (requer que a coluna aceite NULL; em caso de constraint NOT NULL
+                            //  a operação falha, o rollback é disparado e a mensagem abaixo é exibida)
+                            new MySqlCommand(
+                                "UPDATE anamnese SET cpf_paciente = NULL WHERE cpf_paciente = @cpf",
+                                conn, tran)
+                                .WithParam("@cpf", cpf)
+                                .ExecuteNonQuery();
+
+                            new MySqlCommand(
+                                "UPDATE exame SET cpf_paciente = NULL WHERE cpf_paciente = @cpf",
+                                conn, tran)
+                                .WithParam("@cpf", cpf)
+                                .ExecuteNonQuery();
+
+                            // laudos são vinculados por id_exame e mantidos como histórico
                         }
-                        // deletar anamneses
-                        using (var cmd3 = new MySqlCommand("DELETE FROM anamnese WHERE cpf_paciente = @cpf", conn, tran))
-                        {
-                            cmd3.Parameters.AddWithValue("@cpf", cpf);
-                            cmd3.ExecuteNonQuery();
-                        }
+
                         // deletar paciente
-                        using (var cmd4 = new MySqlCommand("DELETE FROM paciente WHERE cpf = @cpf", conn, tran))
+                        int affected = new MySqlCommand(
+                            "DELETE FROM paciente WHERE cpf = @cpf",
+                            conn, tran)
+                            .WithParam("@cpf", cpf)
+                            .ExecuteNonQuery();
+
+                        if (affected == 0)
                         {
-                            cmd4.Parameters.AddWithValue("@cpf", cpf);
-                            cmd4.ExecuteNonQuery();
+                            tran.Rollback();
+                            MessageBox.Show(
+                                $"Paciente {cpf} não encontrado. Nada foi removido.",
+                                "Aviso",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+                            return;
                         }
 
                         tran.Commit();
                     }
+                    catch
+                    {
+                        tran.Rollback();
+                        throw;
+                    }
+                }
 
-                    MessageBox.Show("Paciente e registros relacionados excluídos.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Erro ao excluir paciente: " + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                MessageBox.Show(
+                    deleteCascade
+                        ? "Paciente e registros relacionados excluídos."
+                        : "Paciente excluído. Registros relacionados foram preservados como histórico.",
+                    "OK",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Erro ao excluir paciente: " + ex.Message +
+                        "\n\nSe a opção escolhida foi 'preservar histórico', talvez a coluna cpf_paciente não permita NULL. " +
+                        "Nesse caso, utilize a opção 'excluir tudo em cascata'.",
+                    "Erro",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
@@ -380,12 +461,33 @@ namespace INTERFACE_POSTRATA
                 try
                 {
                     using (var conn = Conexao.ObterConexao())
-                    using (var cmd = new MySqlCommand("DELETE FROM anamnese WHERE id_anamnese = @id", conn))
+                    using (var tran = conn.BeginTransaction())
                     {
-                        cmd.Parameters.AddWithValue("@id", id);
-                        cmd.ExecuteNonQuery();
+                        try
+                        {
+                            int affected;
+                            using (var cmd = new MySqlCommand("DELETE FROM anamnese WHERE id_anamnese = @id", conn, tran))
+                            {
+                                cmd.Parameters.AddWithValue("@id", id);
+                                affected = cmd.ExecuteNonQuery();
+                            }
+
+                            if (affected == 0)
+                            {
+                                tran.Rollback();
+                                MessageBox.Show($"Anamnese {id} não encontrada. Nada foi removido.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Information);
+                                return;
+                            }
+
+                            tran.Commit();
+                            MessageBox.Show("Anamnese excluída.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                        catch
+                        {
+                            tran.Rollback();
+                            throw;
+                        }
                     }
-                    MessageBox.Show("Anamnese excluída.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
@@ -409,17 +511,36 @@ namespace INTERFACE_POSTRATA
                     using (var conn = Conexao.ObterConexao())
                     using (var tran = conn.BeginTransaction())
                     {
-                        using (var cmd = new MySqlCommand("DELETE FROM laudo WHERE id_exame = @id", conn, tran))
+                        try
                         {
-                            cmd.Parameters.AddWithValue("@id", id);
-                            cmd.ExecuteNonQuery();
+                            // deletar laudos relacionados
+                            using (var cmd = new MySqlCommand("DELETE FROM laudo WHERE id_exame = @id", conn, tran))
+                            {
+                                cmd.Parameters.AddWithValue("@id", id);
+                                cmd.ExecuteNonQuery();
+                            }
+                            // deletar exame
+                            int affected;
+                            using (var cmd2 = new MySqlCommand("DELETE FROM exame WHERE id_exame = @id", conn, tran))
+                            {
+                                cmd2.Parameters.AddWithValue("@id", id);
+                                affected = cmd2.ExecuteNonQuery();
+                            }
+
+                            if (affected == 0)
+                            {
+                                tran.Rollback();
+                                MessageBox.Show($"Exame {id} não encontrado. Nada foi removido.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Information);
+                                return;
+                            }
+
+                            tran.Commit();
                         }
-                        using (var cmd2 = new MySqlCommand("DELETE FROM exame WHERE id_exame = @id", conn, tran))
+                        catch
                         {
-                            cmd2.Parameters.AddWithValue("@id", id);
-                            cmd2.ExecuteNonQuery();
+                            tran.Rollback();
+                            throw;
                         }
-                        tran.Commit();
                     }
                     MessageBox.Show("Exame e laudo associados excluídos.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -443,10 +564,31 @@ namespace INTERFACE_POSTRATA
                 try
                 {
                     using (var conn = Conexao.ObterConexao())
-                    using (var cmd = new MySqlCommand("DELETE FROM laudo WHERE id_laudo = @id", conn))
+                    using (var tran = conn.BeginTransaction())
                     {
-                        cmd.Parameters.AddWithValue("@id", id);
-                        cmd.ExecuteNonQuery();
+                        try
+                        {
+                            int affected;
+                            using (var cmd = new MySqlCommand("DELETE FROM laudo WHERE id_laudo = @id", conn, tran))
+                            {
+                                cmd.Parameters.AddWithValue("@id", id);
+                                affected = cmd.ExecuteNonQuery();
+                            }
+
+                            if (affected == 0)
+                            {
+                                tran.Rollback();
+                                MessageBox.Show($"Laudo {id} não encontrado. Nada foi removido.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Information);
+                                return;
+                            }
+
+                            tran.Commit();
+                        }
+                        catch
+                        {
+                            tran.Rollback();
+                            throw;
+                        }
                     }
                     MessageBox.Show("Laudo excluído.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -567,5 +709,15 @@ namespace INTERFACE_POSTRATA
 
 
 
+        // Pequeno helper para encadear AddWithValue sem repetir linhas
+    }
+
+    internal static class CmdExtensions
+    {
+        public static MySqlCommand WithParam(this MySqlCommand cmd, string name, object value)
+        {
+            cmd.Parameters.AddWithValue(name, value);
+            return cmd;
+        }
     }
 }
