@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj": {}
+    "c:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj": {}
   },
   "projects": {
-    "C:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj": {
+    "c:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
+        "projectUniqueName": "c:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
         "projectName": "INTERFACE_POSTRATA",
-        "projectPath": "C:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
-        "packagesPath": "C:\\Users\\kaioc\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\obj\\",
+        "projectPath": "c:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
+        "packagesPath": "C:\\Users\\kaioc\\AppData\\Local\\Temp\\cursor-sandbox-cache\\885acc534c12a68850acee2f4746ab66\\nuget",
+        "outputPath": "c:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

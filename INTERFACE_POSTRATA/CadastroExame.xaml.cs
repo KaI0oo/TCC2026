@@ -328,10 +328,16 @@ namespace INTERFACE_POSTRATA
                 string psaLivreRaw = txtPSALivre.Text.Trim();
                 string densidadeRaw = txtDensidade.Text.Trim();
 
-                // Validar campos obrigatórios antes de chamar a IA (densidade pode faltar)
+                // Validar campos obrigatórios antes de chamar a IA
                 if (string.IsNullOrEmpty(idadeRaw) || string.IsNullOrEmpty(psaTotalRaw) || string.IsNullOrEmpty(psaLivreRaw))
                 {
                     Services.DialogService.Warn("Por favor, preencha Idade, PSA Total e PSA Livre antes de gerar o laudo.");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(densidadeRaw))
+                {
+                    Services.DialogService.Warn("Informe a densidade do PSA.");
                     return;
                 }
 
@@ -341,13 +347,6 @@ namespace INTERFACE_POSTRATA
                 string? psaLivre = Services.NumberFormatHelper.NormalizarNumero(psaLivreRaw);
                 string? densidade = Services.NumberFormatHelper.NormalizarNumero(densidadeRaw);
 
-                // Se densidade estiver ausente, avisar e usar valor 0 para chamada à IA
-                if (string.IsNullOrWhiteSpace(densidadeRaw))
-                {
-                    Services.DialogService.Info("PSA Densidade não foi informado. O laudo será gerado sem considerar a densidade.");
-                    densidade = "0";
-                }
-
                 // Verificar se a normalização foi bem-sucedida
                 if (idade == null || psaTotal == null || psaLivre == null || densidade == null)
                 {
@@ -355,38 +354,27 @@ namespace INTERFACE_POSTRATA
                     return;
                 }
 
-                // Obter diretório do executável
-                string dirExecavel = AppDomain.CurrentDomain.BaseDirectory;
+                // Validar CPF e demais regras do exame antes de chamar a IA
+                var exameValidation = Validators.ExameValidator.Validate(
+                    txtCPF.Text?.Trim(),
+                    txtPSATotal.Text?.Trim(),
+                    txtPSALivre.Text?.Trim(),
+                    txtDensidade.Text?.Trim(),
+                    txtPDFSelecionado.Text == "Nenhum PDF selecionado" ? string.Empty : txtPDFSelecionado.Text
+                );
 
-                // Procurar pelo script executar_ia.py em múltiplos locais
-                string caminhoScriptIA = null;
-
-                // Tentar em múltiplos caminhos (estrutura: bin\Debug\net10.0-windows\)
-                string[] caminhosPossiveis = new[]
+                if (!exameValidation.IsValid)
                 {
-                    System.IO.Path.Combine(dirExecavel, "..", "..", "..", "..", "executar_ia.py"),  // ../../../../ (sai de net10.0-windows/Debug/bin/INTERFACE_POSTRATA) para raiz
-                    System.IO.Path.Combine(dirExecavel, "..", "..", "..", "executar_ia.py"),       // ../../../ (sai de net10.0-windows/Debug/bin)
-                    System.IO.Path.Combine(dirExecavel, "..", "..", "executar_ia.py"),             // ../../ (sai de Debug/bin)
-                    System.IO.Path.Combine(dirExecavel, "..", "executar_ia.py"),                   // ../ (sai de bin)
-                    System.IO.Path.Combine(dirExecavel, "executar_ia.py")                          // direto em BaseDirectory
-                };
-
-                foreach (var caminho in caminhosPossiveis)
-                {
-                    string caminhoCompleto = System.IO.Path.GetFullPath(caminho);
-                    if (System.IO.File.Exists(caminhoCompleto))
-                    {
-                        caminhoScriptIA = caminhoCompleto;
-                        break;
-                    }
+                    Services.DialogService.Warn($"Validação do exame falhou: {exameValidation.Message}");
+                    return;
                 }
 
-                // Verificar se o script foi encontrado
+                string? caminhoScriptIA = EncontrarScriptIA();
                 if (string.IsNullOrEmpty(caminhoScriptIA))
                 {
-                    string mensagemErro = $"Arquivo executar_ia.py não encontrado.\n\nProcurou em:\n" +
-                        string.Join("\n", caminhosPossiveis.Select(p => System.IO.Path.GetFullPath(p)));
-                    Services.DialogService.Error(mensagemErro);
+                    Services.DialogService.Error(
+                        "Arquivo IA/executar_ia.py não encontrado.\n\n" +
+                        "Verifique se a pasta IA existe na raiz do repositório com executar_ia.py, IA_generator.py, dados_psa_clinica.csv e IA.joblib.");
                     return;
                 }
 
@@ -431,8 +419,16 @@ namespace INTERFACE_POSTRATA
                 System.Diagnostics.Debug.WriteLine($"Saída da IA: {saida}");
                 System.Diagnostics.Debug.WriteLine($"Erro da IA: {erro}");
 
-                // Tratar resultado
-                string resultadoIA = string.Empty;
+                System.Diagnostics.Debug.WriteLine($"ExitCode da IA: {processo.ExitCode}");
+
+                if (processo.ExitCode != 0)
+                {
+                    string detalhe = !string.IsNullOrEmpty(erro) ? erro : saida;
+                    Services.DialogService.Error(
+                        $"Erro ao executar a IA (código de saída {processo.ExitCode})." +
+                        (string.IsNullOrEmpty(detalhe) ? string.Empty : $"\n{detalhe}"));
+                    return;
+                }
 
                 if (!string.IsNullOrEmpty(erro))
                 {
@@ -440,20 +436,17 @@ namespace INTERFACE_POSTRATA
                     return;
                 }
 
-                if (!string.IsNullOrEmpty(saida))
+                if (string.IsNullOrEmpty(saida))
                 {
-                    resultadoIA = saida.ToUpper().Trim();
-                    // Validar resultado
-                    if (resultadoIA != "SUSPEITO" && resultadoIA != "BENIGNO")
-                    {
-                        Services.DialogService.Warn($"Resultado inesperado da IA: {resultadoIA}\nUsando valor padrão: BENIGNO");
-                        resultadoIA = "BENIGNO"; // valor padrão
-                    }
+                    Services.DialogService.Error("A IA não retornou um resultado.");
+                    return;
                 }
-                else
+
+                string resultadoIA = saida.ToUpper().Trim();
+                if (resultadoIA != "SUSPEITO" && resultadoIA != "BENIGNO")
                 {
-                    Services.DialogService.Warn("A IA não retornou um resultado. Usando valor padrão: BENIGNO");
-                    resultadoIA = "BENIGNO"; // valor padrão
+                    Services.DialogService.Error($"Resultado inesperado da IA: {resultadoIA}");
+                    return;
                 }
 
                 // Tentar salvar exame no banco (se houver tabela 'exame')
@@ -483,22 +476,6 @@ namespace INTERFACE_POSTRATA
 
                         using (MySqlCommand cmd = new MySqlCommand(sqlInsert, conn))
                         {
-                            // Validar via ExameValidator antes de inserir
-                            var exameValidation = Validators.ExameValidator.Validate(
-                                txtCPF.Text?.Trim(),
-                                txtPSATotal.Text?.Trim(),
-                                txtPSALivre.Text?.Trim(),
-                                txtDensidade.Text?.Trim(),
-                                txtPDFSelecionado.Text == "Nenhum PDF selecionado" ? string.Empty : txtPDFSelecionado.Text
-                            );
-
-                            if (!exameValidation.IsValid)
-                            {
-                                Services.DialogService.Warn($"Validação do exame falhou: {exameValidation.Message}");
-                                return;
-                            }
-
-                            // cpf do paciente vem do campo do formulário
                             cmd.Parameters.AddWithValue("@cpf_paciente", exameValidation.Value.CpfPaciente);
                             cmd.Parameters.AddWithValue("@psa_total", exameValidation.Value.PsaTotal);
                             cmd.Parameters.AddWithValue("@psa_livre", exameValidation.Value.PsaLivre);
@@ -535,6 +512,30 @@ namespace INTERFACE_POSTRATA
             {
                 Services.DialogService.Error($"Erro ao gerar laudo:\n{ex.Message}");
             }
+        }
+
+        private static string? EncontrarScriptIA()
+        {
+            string dirExecavel = AppDomain.CurrentDomain.BaseDirectory;
+            var caminhosProcurados = new List<string>();
+
+            var diretorioAtual = new System.IO.DirectoryInfo(dirExecavel);
+            while (diretorioAtual != null)
+            {
+                string candidato = System.IO.Path.Combine(diretorioAtual.FullName, "IA", "executar_ia.py");
+                caminhosProcurados.Add(candidato);
+                if (System.IO.File.Exists(candidato))
+                {
+                    return candidato;
+                }
+                diretorioAtual = diretorioAtual.Parent;
+            }
+
+            System.Diagnostics.Debug.WriteLine(
+                "IA/executar_ia.py não encontrado. Caminhos verificados:\n" +
+                string.Join("\n", caminhosProcurados));
+
+            return null;
         }
 
         private string EncontrarPython()
