@@ -5,13 +5,12 @@ import IA_generator as ia  # Importando a nova biblioteca criada
 
 # 1. Gerenciamento de Caminhos Relativos Seguros
 pasta_atual = Path(__file__).resolve().parent if '__file__' in globals() else Path.cwd()
-caminho_modelo = pasta_atual / "IA.joblib" # Atualizado para .joblib
-caminho_dados = pasta_atual / "dados_psa_clinica.csv" # Necessário caso precise treinar
+caminho_modelo = pasta_atual / "IA.joblib"
+caminho_dados = pasta_atual / "dados_psa_clinica.csv" 
 
-# 2. Verifica se o modelo já existe. Se não existir, utiliza a biblioteca para gerar um.
+# 2. Verifica se o modelo já existe
 if not caminho_modelo.exists():
     try:
-        # Puxa o fluxo de treinamento da biblioteca
         X, y = ia.carregar_dados(caminho_dados)
         modelo_novo, _, _ = ia.treinar_modelo_prostata(X, y)
         ia.salvar_modelo(modelo_novo, caminho_modelo)
@@ -19,15 +18,26 @@ if not caminho_modelo.exists():
         print("ERRO: Modelo não encontrado e arquivo de dados (CSV) ausente para treino.")
         sys.exit(1)
 
-# 3. Carrega o modelo utilizando a função da biblioteca
+# 3. Carrega o modelo
 modelo = ia.carregar_modelo_salvo(caminho_modelo)
 
-# 4. Processamento dos argumentos recebidos pelo sistema/backend
-idade = float(sys.argv[1])
-psa_total = float(sys.argv[2])
-psa_livre = float(sys.argv[3])
-densidade = float(sys.argv[4])
+# ==========================================
+# NOVO: 3.5 Validação Segura dos Argumentos
+# ==========================================
+if len(sys.argv) < 5:
+    print("ERRO: Argumentos insuficientes. Esperado: Idade, PSA_Total, PSA_Livre, Densidade")
+    sys.exit(1)
 
+try:
+    idade = float(sys.argv[1])
+    psa_total = float(sys.argv[2])
+    psa_livre = float(sys.argv[3])
+    densidade = float(sys.argv[4])
+except ValueError:
+    print("ERRO: Os argumentos devem ser numéricos. Formato inválido recebido do backend.")
+    sys.exit(1)
+
+# 4. Processamento das features
 relacao_lt = psa_livre / psa_total
 if relacao_lt > 1:
     relacao_lt /= 100
@@ -48,7 +58,12 @@ resultado = modelo.predict(entrada)[0]
 # --- AS ÚLTIMAS LINHAS MANTIDAS INTACTAS PARA COMUNICAÇÃO COM O PROJETO ---
 if resultado == 1:
     print("SUSPEITO")
-      # Probabilidade de ser SUSPEITO
+    # Caso queira usar a probabilidade no futuro (ex: para salvar no banco de dados):
+    # probabilidade = modelo.predict_proba(entrada)[0][1] * 100
+    # print(f"Probabilidade: {probabilidade:.2f}%") 
 else:
     print("BENIGNO")
-# gerar_metricas_avaliacao()
+
+# OBS: A linha "# gerar_metricas_avaliacao()" antiga que ficava aqui no fim pode 
+# ser removida permanentemente, pois não faz sentido calcular métricas para a 
+# previsão de um único paciente no fluxo de produção.
