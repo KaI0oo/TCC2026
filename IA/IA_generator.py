@@ -1,19 +1,22 @@
 import pandas as pd
 from pathlib import Path
 import joblib
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import classification_report, confusion_matrix, recall_score, accuracy_score
 
 def carregar_dados(caminho_arquivo):
     """
-    Carrega o dataset e separa as features do target.
+    Carrega o dataset e separa as features da variável alvo (target).
     
     Parâmetros:
         caminho_arquivo (str ou Path): Caminho absoluto ou relativo para o CSV.
+        
     Retorna:
-        X (DataFrame), y (Series)
+        X (DataFrame): Variáveis independentes (features).
+        y (Series): Variável dependente (target).
     """
     df = pd.read_csv(caminho_arquivo)
     X = df.drop('Resultado', axis=1)
@@ -22,43 +25,59 @@ def carregar_dados(caminho_arquivo):
 
 def treinar_modelo_prostata(X, y, test_size=0.3, random_state=42):
     """
-    Realiza o split estratificado, treina a árvore de decisão balanceada 
-    e aplica a calibração de probabilidades.
-    
-    Retorna:
-        modelo_calibrado, X_test, y_test
+    Realiza o particionamento estratificado dos dados, compara os algoritmos 
+    Arvore de Decisao e Random Forest otimizando hiperparametros via GridSearchCV 
+    com foco na metrica de Recall, e aplica a calibracao de probabilidades no 
+    modelo vencedor.
     """
-    # 1. Split com Estratificação (Garante proporção igual de doentes no treino e teste)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=test_size, random_state=random_state, stratify=y
     )
 
-    # 2. Treinamento da Árvore de Decisão Base
-    clf = DecisionTreeClassifier(
-        max_depth=3, 
-        criterion='entropy', 
-        class_weight='balanced', # Penaliza erros na classe minoritária
-        random_state=random_state
-    )
-    clf.fit(X_train, y_train)
+    modelos_para_testar = {
+        'Arvore_Decisao': {
+            'modelo': DecisionTreeClassifier(class_weight='balanced', random_state=random_state),
+            'parametros': {
+                'max_depth': [3, 5, 7, None],
+                'criterion': ['gini', 'entropy']
+            }
+        },
+        'Random_Forest': {
+            'modelo': RandomForestClassifier(class_weight='balanced', random_state=random_state),
+            'parametros': {
+                'max_depth': [3, 5, 7, None],
+                'n_estimators': [50, 100, 200]
+            }
+        }
+    }
 
-    # 3. Calibração (Gera probabilidades confiáveis para o médico)
-    clf_calibrated = CalibratedClassifierCV(clf, cv=5, method='sigmoid')
+    melhor_recall_cv = 0
+    melhor_modelo_base = None
+
+    for nome, config in modelos_para_testar.items():
+        grid = GridSearchCV(
+            estimator=config['modelo'],
+            param_grid=config['parametros'],
+            cv=5,
+            scoring='recall',
+            n_jobs=-1
+        )
+        
+        grid.fit(X_train, y_train)
+        
+        if grid.best_score_ > melhor_recall_cv:
+            melhor_recall_cv = grid.best_score_
+            melhor_modelo_base = grid.best_estimator_
+
+    clf_calibrated = CalibratedClassifierCV(melhor_modelo_base, cv=5, method='sigmoid')
     clf_calibrated.fit(X_train, y_train)
 
     return clf_calibrated, X_test, y_test
 
-def gerar_metricas_avaliacao(modelo, X_test, y_test, imprimir=True):
+def gerar_metricas_avaliacao(modelo, X_test, y_test):
     """
-    Avalia o modelo e retorna as métricas principais.
-    
-    Parâmetros:
-        modelo: Modelo treinado pelo Scikit-Learn.
-        X_test, y_test: Dados de teste.
-        imprimir (bool): Se True, imprime o relatório no console.
-        
-    Retorna:
-        dict: Dicionário contendo acurácia, recall e os valores da matriz de confusão.
+    Avalia o modelo utilizando o conjunto de teste, focando no Recall 
+    e na desconstrução da Matriz de Confusão.
     """
     y_pred = modelo.predict(X_test)
     
@@ -66,28 +85,31 @@ def gerar_metricas_avaliacao(modelo, X_test, y_test, imprimir=True):
     recall = recall_score(y_test, y_pred)
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
     
-    if imprimir:
-        print("\n" + "="*40)
-        print("MÉTRICAS PRINCIPAIS (Foco Médico)")
-        print("="*40)
-        print(f"Acurácia Geral: {acuracia * 100:.2f}%")
-        print(f"Recall (Sensibilidade): {recall * 100:.2f}% (Capacidade de detectar doentes)")
-        print("\n--- Relatório de Classificação Completo ---")
-        print(classification_report(y_test, y_pred))
-        print("--- Matriz de Confusão ---")
-        print(f"VN (Saudáveis Corretos): {tn} | FP (Alarmes Falsos): {fp}")
-        print(f"FN (Casos Perdidos): {fn}     | VP (Suspeitos Corretos): {tp}")
+    relatorio_sklearn = classification_report(y_test, y_pred)
+    
+    relatorio_texto = (
+        "========================================\n"
+        "METRICAS PRINCIPAIS NO TESTE (Foco Medico)\n"
+        "========================================\n"
+        f"Acuracia Geral: {acuracia * 100:.2f}%\n"
+        f"Recall (Sensibilidade): {recall * 100:.2f}%\n\n"
+        "--- Relatorio de Classificacao Completo ---\n"
+        f"{relatorio_sklearn}\n"
+        "--- Matriz de Confusao ---\n"
+        f"VN (Saudaveis Corretos): {tn} | FP (Alarmes Falsos): {fp}\n"
+        f"FN (Casos Perdidos): {fn}     | VP (Suspeitos Corretos): {tp}\n"
+    )
 
-    # Retorna os dados para que o sistema chamador possa usá-los (ex: em uma API)
     return {
         "acuracia": acuracia,
         "recall": recall,
-        "matriz_confusao": {"vn": tn, "fp": fp, "fn": fn, "vp": tp}
+        "matriz_confusao": {"vn": tn, "fp": fp, "fn": fn, "vp": tp},
+        "relatorio_texto": relatorio_texto
     }
 
 def salvar_modelo(modelo, caminho_salvamento):
     """
-    Salva o modelo treinado em disco usando joblib.
+    Garante a criação dos diretórios necessários e salva o modelo no formato joblib.
     """
     caminho = Path(caminho_salvamento)
     caminho.parent.mkdir(parents=True, exist_ok=True)
@@ -96,6 +118,6 @@ def salvar_modelo(modelo, caminho_salvamento):
 
 def carregar_modelo_salvo(caminho_modelo):
     """
-    Carrega um modelo previamente salvo do disco para realizar inferências.
+    Carrega o arquivo do modelo serializado e o retorna pronto para uso.
     """
     return joblib.load(caminho_modelo)
