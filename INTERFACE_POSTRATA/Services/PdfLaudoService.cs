@@ -73,11 +73,12 @@ namespace INTERFACE_POSTRATA.Services
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4);
-                    page.Margin(40);
+                    page.Margin(30);
                     page.PageColor(Colors.White);
                     page.DefaultTextStyle(t => t.FontFamily(Fonts.SegoeUI).FontSize(11).FontColor(Colors.Black));
 
-                    page.Header().Element(Header);
+                    // Sem page.Header() — o cabeçalho azul deve aparecer SOMENTE na página 1
+                    // e é renderizado explicitamente dentro do Conteudo().
                     page.Content().Element(c => Conteudo(c, data));
                     page.Footer().Element(Rodape);
                 });
@@ -86,27 +87,38 @@ namespace INTERFACE_POSTRATA.Services
             doc.GeneratePdf(pdfPath);
         }
 
-        private static void Header(IContainer container)
+        /// <summary>
+        /// Cabeçalho azul usado SOMENTE na primeira página (dentro do Conteudo).
+        /// Não está em page.Header() para evitar repetição automática em todas as páginas.
+        /// </summary>
+        private static void CabecalhoAzul(IContainer container)
         {
             container.Column(col =>
             {
-                col.Item().Background(AzulCiano).Padding(20).Column(c =>
+                col.Item().Background(AzulCiano).Padding(12).Column(c =>
                 {
                     c.Item().AlignCenter().Text("Sistema de Laudos Médicos")
-                        .FontSize(20).FontColor(Colors.White).Bold();
-                    c.Item().AlignCenter().PaddingTop(4).Text("Laudo de PSA Total e Livre")
-                        .FontSize(12).FontColor(Colors.White);
+                        .FontSize(18).FontColor(Colors.White).Bold();
+                    c.Item().AlignCenter().PaddingTop(2).Text("Laudo de PSA Total e Livre")
+                        .FontSize(11).FontColor(Colors.White);
                 });
 
-                col.Item().PaddingTop(14).LineHorizontal(1).LineColor(AzulCiano);
+                col.Item().PaddingTop(8).LineHorizontal(1).LineColor(AzulCiano);
             });
         }
 
         private static void Conteudo(IContainer container, LaudoPdfData d)
         {
-            container.PaddingVertical(10).Column(col =>
+            container.PaddingVertical(5).Column(col =>
             {
-                col.Spacing(12);
+                col.Spacing(6);
+
+                // ============================================================
+                // PÁGINA 1
+                // ============================================================
+
+                // Cabeçalho azul (somente na página 1)
+                col.Item().Element(CabecalhoAzul);
 
                 // Dados do paciente
                 col.Item().Element(c => TituloSecao(c, "Dados do Paciente"));
@@ -118,8 +130,8 @@ namespace INTERFACE_POSTRATA.Services
                     ("Idade", TextoOuTraco(d.Idade))
                 }));
 
-                // Dados do médico
-                col.Item().Element(c => TituloSecao(c, "Dados do Médico"));
+                // Dados do exame (médico solicitante + data do laudo)
+                col.Item().Element(c => TituloSecao(c, "Dados do Exame"));
                 col.Item().Element(c => CaixaInfo(c, new (string Label, string Value)[]
                 {
                     ("Médico", TextoOuTraco(d.Medico)),
@@ -135,23 +147,31 @@ namespace INTERFACE_POSTRATA.Services
                 if (!string.IsNullOrWhiteSpace(d.DataExame))
                 {
                     col.Item().AlignRight().Text($"Data do exame/coleta: {d.DataExame}")
-                        .FontSize(10).FontColor(Colors.Grey.Medium);
+                        .FontSize(9).FontColor(Colors.Grey.Medium);
                 }
-
-                // Interpretação
-                col.Item().Element(c => TituloSecao(c, "Interpretação"));
-                col.Item().Element(c => CaixaTexto(c, TextoOuTraco(d.Interpretacao)));
 
                 // Classificação de risco (título + resultado BENIGNO/SUSPEITO)
                 // Mantidos juntos na mesma página para evitar quebra entre eles.
                 col.Item().Element(c => BlocoClassificacao(c, d.Classificacao));
 
-                // Notas (depois do bloco de classificação)
+                // Quebra de página explícita — garante que a Interpretação
+                // comece na página 2.
+                col.Item().PageBreak();
+
+                // ============================================================
+                // PÁGINA 2
+                // ============================================================
+
+                // Interpretação
+                col.Item().Element(c => TituloSecao(c, "Interpretação"));
+                col.Item().Element(c => CaixaTexto(c, TextoOuTraco(d.Interpretacao)));
+
+                // Notas
                 col.Item().Element(c => TituloSecao(c, "Notas"));
                 col.Item().Element(c => CaixaTexto(c, TextoOuTraco(d.Notas)));
 
                 // Assinatura
-                col.Item().PaddingTop(28).Element(c => Assinatura(c, d));
+                col.Item().PaddingTop(20).Element(c => Assinatura(c, d));
             });
         }
 
@@ -167,12 +187,12 @@ namespace INTERFACE_POSTRATA.Services
 
         private static void TituloSecao(IContainer container, string titulo)
         {
-            container.Text(titulo).FontSize(14).Bold().FontColor(AzulCianoEscuro);
+            container.Text(titulo).FontSize(12).Bold().FontColor(AzulCianoEscuro);
         }
 
         private static void CaixaInfo(IContainer container, (string Label, string Value)[] linhas)
         {
-            container.Border(1).BorderColor(CinzaClaro).Padding(12).Table(tabela =>
+            container.Border(1).BorderColor(CinzaClaro).Padding(8).Table(tabela =>
             {
                 tabela.ColumnsDefinition(cols =>
                 {
@@ -184,13 +204,13 @@ namespace INTERFACE_POSTRATA.Services
 
                 for (int i = 0; i < linhas.Length; i += 2)
                 {
-                    tabela.Cell().PaddingVertical(4).Text(linhas[i].Label).SemiBold();
-                    tabela.Cell().PaddingVertical(4).Text(linhas[i].Value);
+                    tabela.Cell().PaddingVertical(2).Text(linhas[i].Label).SemiBold();
+                    tabela.Cell().PaddingVertical(2).Text(linhas[i].Value);
 
                     if (i + 1 < linhas.Length)
                     {
-                        tabela.Cell().PaddingVertical(4).Text(linhas[i + 1].Label).SemiBold();
-                        tabela.Cell().PaddingVertical(4).Text(linhas[i + 1].Value);
+                        tabela.Cell().PaddingVertical(2).Text(linhas[i + 1].Label).SemiBold();
+                        tabela.Cell().PaddingVertical(2).Text(linhas[i + 1].Value);
                     }
                 }
             });
@@ -198,9 +218,9 @@ namespace INTERFACE_POSTRATA.Services
 
         private static void CaixaResultados(IContainer container, LaudoPdfData d)
         {
-            container.Border(1).BorderColor(CinzaClaro).Padding(12).Column(col =>
+            container.Border(1).BorderColor(CinzaClaro).Padding(8).Column(col =>
             {
-                col.Spacing(8);
+                col.Spacing(4);
 
                 LinhaResultado(col, "PSA Total", TextoOuTraco(d.PsaTotal), "ng/mL");
                 col.Item().LineHorizontal(0.5f).LineColor(CinzaClaro);
@@ -218,18 +238,18 @@ namespace INTERFACE_POSTRATA.Services
             {
                 row.RelativeItem().Column(c =>
                 {
-                    c.Item().Text(label).SemiBold().FontSize(12);
-                    c.Item().PaddingTop(2).Text("Valores de referência são meramente informativos. A interpretação é de responsabilidade do médico.")
-                        .FontSize(9).Italic().FontColor(Colors.Grey.Medium);
+                    c.Item().Text(label).SemiBold().FontSize(11);
+                    c.Item().PaddingTop(1).Text("Valores de referência são meramente informativos. A interpretação é de responsabilidade do médico.")
+                        .FontSize(8).Italic().FontColor(Colors.Grey.Medium);
                 });
-                row.ConstantItem(80).AlignRight().AlignMiddle().Text(valor).FontSize(18).Bold().FontColor(AzulCianoEscuro);
+                row.ConstantItem(80).AlignRight().AlignMiddle().Text(valor).FontSize(16).Bold().FontColor(AzulCianoEscuro);
                 row.ConstantItem(40).AlignLeft().AlignMiddle().Text(unidade).FontSize(10).FontColor(Colors.Grey.Darken1);
             });
         }
 
         private static void CaixaTexto(IContainer container, string texto)
         {
-            container.Border(1).BorderColor(CinzaClaro).Padding(12)
+            container.Border(1).BorderColor(CinzaClaro).Padding(10)
                 .Text(texto).FontSize(11);
         }
 
@@ -240,12 +260,12 @@ namespace INTERFACE_POSTRATA.Services
             var corFundo = suspeito ? FundoSuspeito : FundoBenigno;
             var corTexto = suspeito ? VermelhoSuspeito : VerdeBenigno;
 
-            container.Background(corFundo).Padding(16).Column(c =>
+            container.Background(corFundo).Padding(10).Column(c =>
             {
                 c.Item().AlignCenter().Text("Classificação gerada pela análise assistida (IA)")
                     .FontSize(9).FontColor(Colors.Grey.Medium);
-                c.Item().AlignCenter().PaddingTop(6).Text(classificacao.ToUpperInvariant())
-                    .FontSize(20).Bold().FontColor(corTexto);
+                c.Item().AlignCenter().PaddingTop(4).Text(classificacao.ToUpperInvariant())
+                    .FontSize(18).Bold().FontColor(corTexto);
             });
         }
 
