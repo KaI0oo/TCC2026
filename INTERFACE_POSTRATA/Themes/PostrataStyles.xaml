@@ -1,0 +1,158 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============ CORES ============ -->
+    <Color x:Key="PoColorBackground">#F4FDFD</Color>
+    <Color x:Key="PoColorHeader">#0097A7</Color>
+    <Color x:Key="PoColorTitle">#006064</Color>
+    <Color x:Key="PoColorAccent">#00BCD4</Color>
+    <Color x:Key="PoColorDanger">#E53935</Color>
+    <Color x:Key="PoColorPanelBorder">#4F86FF</Color>
+    <Color x:Key="PoColorSubtleBorder">#DADADA</Color>
+    <Color x:Key="PoColorMuted">#607D8B</Color>
+    <Color x:Key="PoColorCardBackground">#FFFFFF</Color>
+    <Color x:Key="PoColorSoftBackground">#FAFAFA</Color>
+    <Color x:Key="PoColorHeaderSubText">#E0F7FA</Color>
+
+    <!-- ============ BRUSHES ============ -->
+    <SolidColorBrush x:Key="PoBackground"          Color="{StaticResource PoColorBackground}"/>
+    <SolidColorBrush x:Key="PoHeaderBrush"         Color="{StaticResource PoColorHeader}"/>
+    <SolidColorBrush x:Key="PoTitleBrush"          Color="{StaticResource PoColorTitle}"/>
+    <SolidColorBrush x:Key="PoAccentBrush"         Color="{StaticResource PoColorAccent}"/>
+    <SolidColorBrush x:Key="PoDangerBrush"         Color="{StaticResource PoColorDanger}"/>
+    <SolidColorBrush x:Key="PoPanelBorderBrush"    Color="{StaticResource PoColorPanelBorder}"/>
+    <SolidColorBrush x:Key="PoSubtleBorderBrush"   Color="{StaticResource PoColorSubtleBorder}"/>
+    <SolidColorBrush x:Key="PoMutedBrush"          Color="{StaticResource PoColorMuted}"/>
+    <SolidColorBrush x:Key="PoCardBackground"      Color="{StaticResource PoColorCardBackground}"/>
+    <SolidColorBrush x:Key="PoSoftBackground"      Color="{StaticResource PoColorSoftBackground}"/>
+    <SolidColorBrush x:Key="PoHeaderSubTextBrush"  Color="{StaticResource PoColorHeaderSubText}"/>
+
+    <!-- ============ ESTILOS DE JANELA ============ -->
+    <Style x:Key="PoWindow" TargetType="Window">
+        <Setter Property="Background" Value="{DynamicResource PoBackground}"/>
+        <Setter Property="WindowState" Value="Maximized"/>
+    </Style>
+
+    <!-- ============ BOTÕES ============ -->
+    <Style x:Key="PoButtonPrimary" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource PoAccentBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="12,4"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <Style x:Key="PoButtonDanger" TargetType="Button" BasedOn="{StaticResource PoButtonPrimary}">
+        <Setter Property="Background" Value="{DynamicResource PoDangerBrush}"/>
+    </Style>
+
+    <Style x:Key="PoButtonMuted" TargetType="Button" BasedOn="{StaticResource PoButtonPrimary}">
+        <Setter Property="Background" Value="{DynamicResource PoMutedBrush}"/>
+    </Style>
+
+    <Style x:Key="PoButtonSecondary" TargetType="Button" BasedOn="{StaticResource PoButtonPrimary}">
+        <Setter Property="Background" Value="{DynamicResource PoTitleBrush}"/>
+    </Style>
+
+    <!-- ============ BORDERS / CARDS ============ -->
+    <Style x:Key="PoPanel" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource PoCardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PoPanelBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+
+    <Style x:Key="PoSubtleBorder" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource PoCardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PoSubtleBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <Style x:Key="PoSoftPanel" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource PoSoftBackground}"/>
+        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+
+    <!-- ============ TEXTOS / LABELS ============ -->
+    <Style x:Key="PoTitleText" TargetType="Label">
+        <Setter Property="FontSize" Value="32"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{DynamicResource PoTitleBrush}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+    </Style>
+
+    <Style x:Key="PoSectionTitle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="26"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{DynamicResource PoTitleBrush}"/>
+    </Style>
+
+    <Style x:Key="PoHeaderTitle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="28"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <Style x:Key="PoHeaderSubtitle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="15"/>
+        <Setter Property="Foreground" Value="{DynamicResource PoHeaderSubTextBrush}"/>
+    </Style>
+
+    <Style x:Key="PoFormLabel" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+
+    <!-- ============ CAMPOS DE FORMULÁRIO ============ -->
+    <!-- Estilos compartilhados para TextBox, PasswordBox e ComboBox dos formulários do RH.
+         Aplicam: altura consistente, padding, bordas suaves e expansão horizontal completa
+         (Stretch) com largura mínima adequada. Devem ser usados dentro de células de Grid
+         com Width="*" ou em containers que ofereçam largura real. -->
+
+    <Style x:Key="PoTextBox" TargetType="TextBox">
+        <Setter Property="Height" Value="38"/>
+        <Setter Property="MinHeight" Value="38"/>
+        <Setter Property="MinWidth" Value="240"/>
+        <Setter Property="MaxWidth" Value="520"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PoSubtleBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <Style x:Key="PoPasswordBox" TargetType="PasswordBox">
+        <Setter Property="Height" Value="38"/>
+        <Setter Property="MinHeight" Value="38"/>
+        <Setter Property="MinWidth" Value="240"/>
+        <Setter Property="MaxWidth" Value="520"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PoSubtleBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <Style x:Key="PoComboBox" TargetType="ComboBox">
+        <Setter Property="Height" Value="38"/>
+        <Setter Property="MinHeight" Value="38"/>
+        <Setter Property="MinWidth" Value="240"/>
+        <Setter Property="MaxWidth" Value="320"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+
+</ResourceDictionary>

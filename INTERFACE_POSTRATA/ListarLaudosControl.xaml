@@ -4,29 +4,46 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             Height="Auto" Width="Auto">
+             VerticalAlignment="Stretch"
+             HorizontalAlignment="Stretch">
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" MinHeight="280" />
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
             <TextBox x:Name="txtPesquisa" Width="300" Height="30" />
             <Button x:Name="btnPesquisar" Content="Pesquisar (CPF)" Width="140" Height="30" Margin="10,0,0,0" Click="BtnPesquisar_Click" />
             <Button x:Name="btnTodos" Content="Mostrar Todos" Width="120" Height="30" Margin="10,0,0,0" Click="BtnTodos_Click" />
+            <Button x:Name="btnVisualizar" Content="Visualizar Laudo" Width="150" Height="30" Margin="10,0,0,0" Click="BtnVisualizar_Click" Visibility="Collapsed" />
             <Button x:Name="btnVoltar" Content="Fechar" Width="100" Height="30" Margin="10,0,0,0" Click="BtnVoltar_Click" />
         </StackPanel>
 
-        <DataGrid x:Name="dgLaudos" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" CanUserSortColumns="True">
+        <TextBlock x:Name="txtStatus"
+                   Grid.Row="1"
+                   Margin="0,0,0,10"
+                   FontSize="14"
+                   Foreground="#546E7A"
+                   TextWrapping="Wrap" />
+
+        <DataGrid x:Name="dgLaudos"
+                  Grid.Row="2"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserSortColumns="True"
+                  MinHeight="280"
+                  SelectionMode="Single">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="ID Laudo" Binding="{Binding id_laudo}" Width="100" />
                 <DataGridTextColumn Header="ID Exame" Binding="{Binding id_exame}" Width="100" />
+                <DataGridTextColumn Header="CPF" Binding="{Binding cpf_paciente}" Width="130" />
                 <DataGridTextColumn Header="Paciente" Binding="{Binding paciente_nome}" Width="*" />
                 <DataGridTextColumn Header="Classificação" Binding="{Binding classificacao}" Width="150" />
                 <DataGridTextColumn Header="Interpretação" Binding="{Binding interpretacao}" Width="*" />
-                <DataGridTextColumn Header="Data" Binding="{Binding data_laudo}" Width="150" />
+                <DataGridTextColumn Header="Data" Binding="{Binding data_laudo}" Width="120" />
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

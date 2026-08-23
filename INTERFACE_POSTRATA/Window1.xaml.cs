@@ -23,9 +23,9 @@ namespace INTERFACE_POSTRATA
             // Atualizar cabeçalho com informações da sessão, quando disponível
             try
             {
-                var nome = INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoName ?? string.Empty;
-                var crm = INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoCrm ?? string.Empty;
-                var cargo = INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoCargo ?? string.Empty;
+                var nome = INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioName ?? string.Empty;
+                var crm = INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioCrm ?? string.Empty;
+                var cargo = INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioCargo ?? string.Empty;
 
                 string prefixo = "";
                 if (cargo.Equals("MEDICO", StringComparison.OrdinalIgnoreCase) || cargo.Equals("Medico", StringComparison.OrdinalIgnoreCase))
@@ -68,9 +68,10 @@ namespace INTERFACE_POSTRATA
         {
             try
             {
-                var cargo = INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoCargo ?? string.Empty;
-                bool isMedico = cargo.Equals("MEDICO", System.StringComparison.OrdinalIgnoreCase);
-                bool isSecretaria = cargo.Equals("SECRETARIA", System.StringComparison.OrdinalIgnoreCase);
+                var cargo = INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioCargo ?? string.Empty;
+                bool isMedico = cargo.Equals("MEDICO", System.StringComparison.OrdinalIgnoreCase)
+                    || cargo.Equals("Medico", System.StringComparison.OrdinalIgnoreCase);
+                bool isSecretaria = INTERFACE_POSTRATA.Helpers.Session.IsSecretaria;
 
                 // Mostrar/ocultar grupos
                 var cadastro = this.FindName("tvCadastroGroup") as System.Windows.Controls.TreeViewItem;
@@ -94,27 +95,7 @@ namespace INTERFACE_POSTRATA
                 }
                 else if (isSecretaria)
                 {
-                    // secretária: manter apenas Início, Cadastro->Cadastrar Paciente e Conta
-                    if (cadastro != null)
-                    {
-                        // esconder todos itens, exceto o primeiro (Cadastrar Paciente)
-                        foreach (var item in cadastro.Items)
-                        {
-                            if (item is System.Windows.Controls.TreeViewItem t)
-                            {
-                                t.Visibility = System.Windows.Visibility.Collapsed;
-                            }
-                        }
-                        // exibir somente primeiro
-                        if (cadastro.Items.Count > 0 && cadastro.Items[0] is System.Windows.Controls.TreeViewItem first)
-                            first.Visibility = System.Windows.Visibility.Visible;
-                    }
-                    if (ia != null) ia.Visibility = System.Windows.Visibility.Collapsed;
-                    if (consultas != null) consultationsHide(consultas);
-                    if (edicao != null) edicao.Visibility = System.Windows.Visibility.Collapsed;
-                    if (exclusao != null) exclusao.Visibility = System.Windows.Visibility.Collapsed;
-                    if (conta != null) conta.Visibility = System.Windows.Visibility.Visible;
-                    if (inicio != null) inicio.Visibility = System.Windows.Visibility.Visible;
+                    ConfigureSecretariaMenu();
                 }
                 else
                 {
@@ -132,6 +113,45 @@ namespace INTERFACE_POSTRATA
             {
                 System.Diagnostics.Debug.WriteLine($"[Window1.ConfigureMenuByRole] {ex}");
             }
+        }
+
+        private void ConfigureSecretariaMenu()
+        {
+            SetVisibility("tvInicioGroup", System.Windows.Visibility.Collapsed);
+            SetVisibility("tvCadastroGroup", System.Windows.Visibility.Visible);
+            SetVisibility("tvConsultasGroup", System.Windows.Visibility.Visible);
+            SetVisibility("tvEdicaoGroup", System.Windows.Visibility.Visible);
+            SetVisibility("tvExclusaoGroup", System.Windows.Visibility.Collapsed);
+            SetVisibility("tvIAGroup", System.Windows.Visibility.Collapsed);
+            SetVisibility("tvContaGroup", System.Windows.Visibility.Visible);
+
+            SetVisibility("tvCadastrarPaciente", System.Windows.Visibility.Visible);
+            SetVisibility("tvCadastrarAnamnese", System.Windows.Visibility.Collapsed);
+            SetVisibility("tvCadastrarExame", System.Windows.Visibility.Collapsed);
+
+            SetVisibility("tvBuscarPacienteGroup", System.Windows.Visibility.Visible);
+            SetVisibility("tvBuscarPacienteUm", System.Windows.Visibility.Visible);
+            SetVisibility("tvBuscarPacienteTodos", System.Windows.Visibility.Collapsed);
+
+            SetVisibility("tvBuscarExameGroup", System.Windows.Visibility.Visible);
+            SetVisibility("tvBuscarExameUm", System.Windows.Visibility.Visible);
+            SetVisibility("tvBuscarExameTodosPaciente", System.Windows.Visibility.Collapsed);
+            SetVisibility("tvBuscarExameTodos", System.Windows.Visibility.Collapsed);
+
+            SetVisibility("tvBuscarLaudoGroup", System.Windows.Visibility.Visible);
+            SetVisibility("tvBuscarLaudoUm", System.Windows.Visibility.Visible);
+            SetVisibility("tvBuscarLaudoTodosPaciente", System.Windows.Visibility.Collapsed);
+            SetVisibility("tvBuscarLaudoTodos", System.Windows.Visibility.Collapsed);
+
+            SetVisibility("tvEditarPaciente", System.Windows.Visibility.Visible);
+            SetVisibility("tvEditarAnamnese", System.Windows.Visibility.Collapsed);
+            SetVisibility("tvEditarExame", System.Windows.Visibility.Visible);
+        }
+
+        private void SetVisibility(string name, System.Windows.Visibility visibility)
+        {
+            if (this.FindName(name) is System.Windows.UIElement element)
+                element.Visibility = visibility;
         }
 
         private void consultationsHide(System.Windows.Controls.TreeViewItem consultas)
@@ -248,7 +268,7 @@ namespace INTERFACE_POSTRATA
             input.Prompt = "Informe o CPF do paciente para buscar laudos:";
             if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
             {
-                var ctrl = new ListarLaudosControl();
+                var ctrl = new ListarLaudosControl(permitirVisualizacao: true, autoCarregar: false);
                 ctrl.CarregarLaudos(input.Valor);
                 SetMainContent(ctrl);
             }
@@ -261,7 +281,7 @@ namespace INTERFACE_POSTRATA
             input.Prompt = "Informe o CPF do paciente (laudos):";
             if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
             {
-                var ctrl = new ListarLaudosControl();
+                var ctrl = new ListarLaudosControl(autoCarregar: false);
                 ctrl.CarregarLaudos(input.Valor);
                 SetMainContent(ctrl);
             }
@@ -315,7 +335,7 @@ namespace INTERFACE_POSTRATA
             input.Prompt = "Informe o CPF do paciente para carregar exames:";
             if (input.ShowDialog() == true && !string.IsNullOrEmpty(input.Valor))
             {
-                var ctrl = new ListarExamesControl();
+                var ctrl = new ListarExamesControl(modoEdicao: true);
                 ctrl.CarregarExames(input.Valor);
                 SetMainContent(ctrl);
             }

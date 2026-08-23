@@ -1,0 +1,108 @@
+<UserControl x:Class="INTERFACE_POSTRATA.RhUserControls.CadastrarProfissionalControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <Grid Margin="20" HorizontalAlignment="Stretch">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Cabeçalho interno -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource PoAccentBrush}"
+                CornerRadius="6"
+                Padding="16,10"
+                Margin="0,0,0,16"
+                HorizontalAlignment="Stretch">
+            <TextBlock Text="Cadastro de Profissional"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+        </Border>
+
+        <!-- Formulário em grid responsivo (duas colunas) que ocupa toda a largura -->
+        <Grid Grid.Row="1" HorizontalAlignment="Stretch">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- RM -->
+            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,12">
+                <TextBlock Text="RM" Style="{StaticResource PoFormLabel}"/>
+                <TextBox x:Name="txtRM" Style="{StaticResource PoTextBox}"/>
+            </StackPanel>
+
+            <!-- Nome -->
+            <StackPanel Grid.Row="0" Grid.Column="1" Margin="12,0,0,12">
+                <TextBlock Text="Nome" Style="{StaticResource PoFormLabel}"/>
+                <TextBox x:Name="txtNome" Style="{StaticResource PoTextBox}"/>
+            </StackPanel>
+
+            <!-- CRM (somente MEDICO) -->
+            <StackPanel x:Name="spCRM"
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Margin="0,0,12,12"
+                        Visibility="Collapsed">
+                <TextBlock x:Name="lblCRM" Text="CRM" Style="{StaticResource PoFormLabel}"/>
+                <TextBox x:Name="txtCRM" Style="{StaticResource PoTextBox}"/>
+            </StackPanel>
+
+            <!-- Senha -->
+            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,12">
+                <TextBlock Text="Senha" Style="{StaticResource PoFormLabel}"/>
+                <PasswordBox x:Name="txtSenha" Style="{StaticResource PoPasswordBox}"/>
+            </StackPanel>
+
+            <!-- Cargo -->
+            <StackPanel Grid.Row="2" Grid.Column="1" Margin="12,0,0,12">
+                <TextBlock Text="Cargo" Style="{StaticResource PoFormLabel}"/>
+                <ComboBox x:Name="cbCargo"
+                          Style="{StaticResource PoComboBox}"
+                          SelectionChanged="CbCargo_SelectionChanged">
+                    <ComboBoxItem Content="RH"/>
+                    <ComboBoxItem Content="MEDICO"/>
+                    <ComboBoxItem Content="SECRETARIA"/>
+                </ComboBox>
+            </StackPanel>
+
+            <!-- Botões -->
+            <StackPanel Grid.Row="3"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="0,8,0,0">
+                <Button Content="Salvar"
+                        Style="{StaticResource PoButtonPrimary}"
+                        Width="120" Height="36"
+                        Click="Salvar_Click"/>
+                <Button Content="Limpar"
+                        Style="{StaticResource PoButtonSecondary}"
+                        Width="120" Height="36"
+                        Margin="10,0,0,0"
+                        Click="Limpar_Click"/>
+            </StackPanel>
+
+            <TextBlock x:Name="lblStatus"
+                       Grid.Row="4"
+                       Grid.Column="0"
+                       Grid.ColumnSpan="2"
+                       Foreground="Red"
+                       Margin="0,12,0,0"
+                       TextWrapping="Wrap"/>
+        </Grid>
+    </Grid>
+</UserControl>

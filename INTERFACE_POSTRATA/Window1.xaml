@@ -10,28 +10,23 @@
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize">
 
-    <Grid Background="#F4FDFD">
+    <Grid Background="{DynamicResource PoBackground}">
         <Grid.RowDefinitions>
             <RowDefinition Height="95"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <!-- TOPO -->
-        <Border Grid.Row="0" Background="#0097A7">
+        <Border Grid.Row="0" Background="{DynamicResource PoHeaderBrush}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="320"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="320"/>
                 </Grid.ColumnDefinitions>
-                <!-- FOTO + MÉDICO -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0,0,0">
-                    <Border Width="65" Height="65" BorderBrush="White" BorderThickness="2">
-                        <Image Stretch="Fill"/>
-                    </Border>
-                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="txtHeaderName" Text="Dr. João Silva" FontSize="22" FontWeight="Bold" Foreground="White"/>
-                        <TextBlock x:Name="txtHeaderCRM" Text="CRM 123456" FontSize="15" Foreground="#E0F7FA"/>
-                    </StackPanel>
+                <!-- MÉDICO -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="20,0,0,0">
+                    <TextBlock x:Name="txtHeaderName" Text="Dr. João Silva" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock x:Name="txtHeaderCRM" Text="CRM 123456" FontSize="15" Foreground="{DynamicResource PoHeaderSubTextBrush}" Margin="0,2,0,0"/>
                 </StackPanel>
                 <!-- TÍTULO -->
                 <TextBlock Grid.Column="1" Text="Sistema de Laudos Médicos" FontSize="30" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -51,9 +46,7 @@
             <!-- MENU LATERAL -->
 
             <Border Grid.Column="0"
-            Background="White"
-            BorderBrush="#DADADA"
-            BorderThickness="1">
+            Style="{StaticResource PoSubtleBorder}">
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
 
@@ -74,9 +67,9 @@
                             <TreeViewItem.Header>
                                 <TextBlock Text="Cadastro" FontWeight="Bold" />
                             </TreeViewItem.Header>
-                            <TreeViewItem Header="Cadastrar Paciente" Selected="CadastrarPaciente_Click"/>
-                            <TreeViewItem Header="Cadastrar Anamnese" Selected="CadastrarAnamnese_Click"/>
-                            <TreeViewItem Header="Cadastrar Exame" Selected="CadastrarExame_Click"/>
+                            <TreeViewItem x:Name="tvCadastrarPaciente" Header="Cadastrar Paciente" Selected="CadastrarPaciente_Click"/>
+                            <TreeViewItem x:Name="tvCadastrarAnamnese" Header="Cadastrar Anamnese" Selected="CadastrarAnamnese_Click"/>
+                            <TreeViewItem x:Name="tvCadastrarExame" Header="Cadastrar Exame" Selected="CadastrarExame_Click"/>
                         </TreeViewItem>
 
                         <!-- CONSULTAS -->
@@ -84,19 +77,19 @@
                             <TreeViewItem.Header>
                                 <TextBlock Text="Consulta" FontWeight="Bold" />
                             </TreeViewItem.Header>
-                            <TreeViewItem Header="Buscar Paciente">
-                                <TreeViewItem Header="Buscar um paciente" Selected="BuscarPaciente_Click"/>
-                                <TreeViewItem Header="Buscar todos os pacientes" Selected="BuscarTodosPacientes_Click"/>
+                            <TreeViewItem x:Name="tvBuscarPacienteGroup" Header="Buscar Paciente">
+                                <TreeViewItem x:Name="tvBuscarPacienteUm" Header="Buscar um paciente" Selected="BuscarPaciente_Click"/>
+                                <TreeViewItem x:Name="tvBuscarPacienteTodos" Header="Buscar todos os pacientes" Selected="BuscarTodosPacientes_Click"/>
                             </TreeViewItem>
-                            <TreeViewItem Header="Buscar Exame">
-                                <TreeViewItem Header="Buscar um Exame de um paciente" Selected="BuscarExamePaciente_Click"/>
-                                <TreeViewItem Header="Buscar todos os exames de um paciente" Selected="BuscarTodosExamesPaciente_Click"/>
-                                <TreeViewItem Header="Buscar todos os exames" Selected="BuscarTodosExames_Click"/>
+                            <TreeViewItem x:Name="tvBuscarExameGroup" Header="Buscar Exame">
+                                <TreeViewItem x:Name="tvBuscarExameUm" Header="Buscar um Exame de um paciente" Selected="BuscarExamePaciente_Click"/>
+                                <TreeViewItem x:Name="tvBuscarExameTodosPaciente" Header="Buscar todos os exames de um paciente" Selected="BuscarTodosExamesPaciente_Click"/>
+                                <TreeViewItem x:Name="tvBuscarExameTodos" Header="Buscar todos os exames" Selected="BuscarTodosExames_Click"/>
                             </TreeViewItem>
-                            <TreeViewItem Header="Buscar Laudo">
-                                <TreeViewItem Header="Buscar um Laudo de um paciente" Selected="BuscarLaudoPaciente_Click"/>
-                                <TreeViewItem Header="Buscar todos os laudos de um paciente" Selected="BuscarTodosLaudosPaciente_Click"/>
-                                <TreeViewItem Header="Buscar todos os laudos" Selected="BuscarTodosLaudos_Click"/>
+                            <TreeViewItem x:Name="tvBuscarLaudoGroup" Header="Buscar Laudo">
+                                <TreeViewItem x:Name="tvBuscarLaudoUm" Header="Buscar um Laudo de um paciente" Selected="BuscarLaudoPaciente_Click"/>
+                                <TreeViewItem x:Name="tvBuscarLaudoTodosPaciente" Header="Buscar todos os laudos de um paciente" Selected="BuscarTodosLaudosPaciente_Click"/>
+                                <TreeViewItem x:Name="tvBuscarLaudoTodos" Header="Buscar todos os laudos" Selected="BuscarTodosLaudos_Click"/>
                             </TreeViewItem>
                         </TreeViewItem>
 
@@ -105,9 +98,9 @@
                             <TreeViewItem.Header>
                                 <TextBlock Text="Edição" FontWeight="Bold" />
                             </TreeViewItem.Header>
-                            <TreeViewItem Header="Editar Paciente" Selected="EditarPaciente_Click"/>
-                            <TreeViewItem Header="Editar Anamnese" Selected="EditarAnamnese_Click"/>
-                            <TreeViewItem Header="Editar Exame" Selected="EditarExame_Click"/>
+                            <TreeViewItem x:Name="tvEditarPaciente" Header="Editar Paciente" Selected="EditarPaciente_Click"/>
+                            <TreeViewItem x:Name="tvEditarAnamnese" Header="Editar Anamnese" Selected="EditarAnamnese_Click"/>
+                            <TreeViewItem x:Name="tvEditarExame" Header="Editar Exame" Selected="EditarExame_Click"/>
                         </TreeViewItem>
 
                         <!-- EXCLUSÃO -->
@@ -148,9 +141,7 @@
 
             <Border Grid.Column="1"
             Margin="10,0,0,0"
-            Background="White"
-            BorderBrush="#4F86FF"
-            BorderThickness="2">
+            Style="{StaticResource PoPanel}">
 
                 <!-- Conteúdo principal substituível -->
                 <ContentControl x:Name="MainContent">

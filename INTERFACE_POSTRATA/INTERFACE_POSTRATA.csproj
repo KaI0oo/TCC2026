@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="MySql.Data" Version="9.7.0" />
+    <PackageReference Include="QuestPDF" Version="2024.10.2" />
   </ItemGroup>
 
   <!-- appsettings.json não é obrigatório; a classe Conexao faz fallback para valores padrão se não existir -->

@@ -1,0 +1,108 @@
+<Window x:Class="INTERFACE_POSTRATA.RhMainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="RH — Sistema de Laudos Médicos"
+        WindowStartupLocation="CenterScreen"
+        Style="{DynamicResource PoWindow}">
+
+    <Grid Background="{DynamicResource PoBackground}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="95"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ============ HEADER ============ -->
+        <Border Grid.Row="0" Background="{DynamicResource PoHeaderBrush}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="320"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="320"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="20,0,0,0">
+                    <TextBlock x:Name="txtRhHeaderName" Text="RH"
+                               Style="{StaticResource PoHeaderTitle}"/>
+                    <TextBlock x:Name="txtRhHeaderCargo" Text="Recursos Humanos"
+                               Style="{StaticResource PoHeaderSubtitle}"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <TextBlock Grid.Column="1"
+                           Text="Sistema de Laudos Médicos — RH"
+                           Style="{StaticResource PoHeaderTitle}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+
+                <TextBlock Grid.Column="2"
+                           x:Name="txtRhWelcome"
+                           Text="Bem-vindo(a)"
+                           FontSize="18" FontWeight="Bold" Foreground="White"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           Margin="0,0,20,0"/>
+            </Grid>
+        </Border>
+
+        <!-- ============ CONTEÚDO ============ -->
+        <Grid Grid.Row="1" Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="7*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- MENU LATERAL -->
+            <Border Style="{StaticResource PoSubtleBorder}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <TreeView x:Name="tvRhMenu" BorderThickness="0"
+                              Background="White" FontSize="22">
+
+                        <TreeViewItem IsExpanded="True">
+                            <TreeViewItem.Header>
+                                <TextBlock Text="Profissionais" FontWeight="Bold"/>
+                            </TreeViewItem.Header>
+                            <TreeViewItem Header="Cadastrar Profissional" Selected="CadastrarProfissional_Click"/>
+                            <TreeViewItem Header="Gerenciar Funcionários" Selected="GerenciarFuncionarios_Click"/>
+                        </TreeViewItem>
+
+                        <TreeViewItem IsExpanded="True">
+                            <TreeViewItem.Header>
+                                <TextBlock Text="Administração" FontWeight="Bold"/>
+                            </TreeViewItem.Header>
+                            <TreeViewItem Header="Alterar RH Principal" Selected="AlterarRhPrincipal_Click"/>
+                        </TreeViewItem>
+
+                        <TreeViewItem IsExpanded="True">
+                            <TreeViewItem.Header>
+                                <TextBlock Text="Conta" FontWeight="Bold"/>
+                            </TreeViewItem.Header>
+                            <TreeViewItem Header="Logout" Selected="Logout_Click"/>
+                            <TreeViewItem Header="Fechar Programa" Selected="FecharPrograma_Click"/>
+                        </TreeViewItem>
+
+                    </TreeView>
+                </ScrollViewer>
+            </Border>
+
+            <!-- PAINEL PRINCIPAL -->
+            <Border Grid.Column="1"
+                    Margin="10,0,0,0"
+                    Style="{StaticResource PoPanel}">
+                <ContentControl x:Name="RhMainContent">
+                    <Grid>
+                        <Label Content="Painel RH"
+                               Style="{StaticResource PoTitleText}"
+                               VerticalAlignment="Top"
+                               Margin="0,25,0,0"/>
+                        <StackPanel Margin="30,100,30,30">
+                            <TextBlock Text="Bem-vindo(a) ao painel de Recursos Humanos."
+                                       FontSize="18" FontWeight="SemiBold"/>
+                            <TextBlock Text="Selecione uma opção no menu ao lado para iniciar."
+                                       FontSize="16" Foreground="Gray" Margin="0,12,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </ContentControl>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

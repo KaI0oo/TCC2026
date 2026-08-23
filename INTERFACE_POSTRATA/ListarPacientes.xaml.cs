@@ -31,7 +31,7 @@ namespace INTERFACE_POSTRATA
                     string sql = "SELECT cpf, nome, idade, telefone FROM paciente";
                     bool temFiltro = !string.IsNullOrEmpty(filtro);
                     // Filtrar pelo médico logado, se houver
-                    if (INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId.HasValue)
+                    if (INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioId.HasValue)
                     {
                         sql += temFiltro ? " WHERE rm_medico = @medico AND (nome LIKE @filtro OR cpf LIKE @filtro)" : " WHERE rm_medico = @medico";
                     }
@@ -43,7 +43,7 @@ namespace INTERFACE_POSTRATA
                     using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                     {
                         if (!string.IsNullOrEmpty(filtro)) cmd.Parameters.AddWithValue("@filtro", "%" + filtro + "%");
-                        if (INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId.HasValue) cmd.Parameters.AddWithValue("@medico", INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId.Value);
+                        if (INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioId.HasValue) cmd.Parameters.AddWithValue("@medico", INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioId.Value);
 
                         using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
                         {

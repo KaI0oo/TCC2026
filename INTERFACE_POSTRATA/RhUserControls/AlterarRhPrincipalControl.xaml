@@ -1,0 +1,84 @@
+<UserControl x:Class="INTERFACE_POSTRATA.RhUserControls.AlterarRhPrincipalControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <Grid Margin="20" HorizontalAlignment="Stretch">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Cabeçalho interno -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource PoAccentBrush}"
+                CornerRadius="6"
+                Padding="16,10"
+                Margin="0,0,0,12"
+                HorizontalAlignment="Stretch">
+            <TextBlock Text="Alterar RH Principal"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+        </Border>
+
+        <TextBlock Grid.Row="1"
+                   Text="Atenção: somente um RH Principal pode existir. Informe o RM do funcionário que será promovido a RH."
+                   TextWrapping="Wrap"
+                   Foreground="Gray"
+                   Margin="0,0,0,16"/>
+
+        <!-- Formulário em grid responsivo (duas colunas) que ocupa toda a largura -->
+        <Grid Grid.Row="2" HorizontalAlignment="Stretch">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,12">
+                <TextBlock Text="RM do Funcionário a ser promovido"
+                           Style="{StaticResource PoFormLabel}"/>
+                <TextBox x:Name="txtTargetRM" Style="{StaticResource PoTextBox}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="0" Grid.Column="1" Margin="12,0,0,12">
+                <TextBlock Text="Nome (opcional)"
+                           Style="{StaticResource PoFormLabel}"/>
+                <TextBox x:Name="txtTargetNome" Style="{StaticResource PoTextBox}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Margin="0,0,0,12">
+                <TextBlock Text="Senha do RH atual (confirmação)"
+                           Style="{StaticResource PoFormLabel}"/>
+                <PasswordBox x:Name="txtCurrentRHPassword" Style="{StaticResource PoPasswordBox}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="2"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="0,8,0,0">
+                <Button Content="Confirmar"
+                        Style="{StaticResource PoButtonSecondary}"
+                        Width="140" Height="36"
+                        Click="Confirmar_Click"/>
+                <Button Content="Cancelar"
+                        Style="{StaticResource PoButtonPrimary}"
+                        Width="120" Height="36"
+                        Margin="10,0,0,0"
+                        Click="Cancelar_Click"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

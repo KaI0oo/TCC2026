@@ -1,17 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Diagnostics;
 using INTERFACE_POSTRATA.Banco;
 using MySql.Data.MySqlClient;
+
 namespace INTERFACE_POSTRATA
 {
     public partial class CadastroExame : Window
@@ -19,11 +17,175 @@ namespace INTERFACE_POSTRATA
         private readonly System.Collections.Generic.Dictionary<string, string> _prevText = new System.Collections.Generic.Dictionary<string, string>();
         private readonly System.Collections.Generic.Dictionary<string, int> _lastSelection = new System.Collections.Generic.Dictionary<string, int>();
         private bool alterando = false;
+        private string _nomePaciente = string.Empty;
+        private string _dataNascimento = string.Empty;
+        private int? _editingExameId = null;
+
         public CadastroExame()
         {
             InitializeComponent();
-            // aplicar máscara de data do mesmo modo que CadastroPaciente ao DatePicker interno
             dtExame.Loaded += DtExame_Loaded;
+            this.Loaded += CadastroExame_Loaded;
+        }
+
+        private void CadastroExame_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Pré-popula o CRM com o do médico logado (se houver) e busca o nome.
+            try
+            {
+                var crmSessao = INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioCrm;
+                if (!string.IsNullOrWhiteSpace(crmSessao))
+                {
+                    txtCRMMedico.Text = crmSessao.Trim();
+                    ConsultarMedicoPorCRM();
+                }
+            }
+            catch { /* fluxo segue sem pré-preencher */ }
+        }
+
+        public CadastroExame(int idExame) : this()
+        {
+            _editingExameId = idExame;
+            Loaded += CadastroExame_EditLoaded;
+        }
+
+        private void CadastroExame_EditLoaded(object sender, RoutedEventArgs e)
+        {
+            ConfigureModoEdicao();
+            CarregarExame(_editingExameId!.Value);
+        }
+
+        private void ConfigureModoEdicao()
+        {
+            Title = "Editar Exame";
+            btnGerarLaudo.Visibility = Visibility.Collapsed;
+            btnMenuPrincipal.Visibility = Visibility.Collapsed;
+
+            // No modo edição expomos um botão "Salvar Alterações" abaixo do formulário
+            var btnSalvar = new Button
+            {
+                Name = "btnSalvarExame",
+                Content = "Salvar Alterações",
+                Width = 220,
+                Height = 50,
+                FontSize = 18,
+                FontWeight = FontWeights.Bold,
+                Background = System.Windows.Media.Brushes.Teal,
+                Foreground = System.Windows.Media.Brushes.White,
+                Margin = new Thickness(0, 20, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+            btnSalvar.Click += SalvarExame_Click;
+
+            // O StackPanel original está dentro de ScrollViewer; recuperamos o pai
+            if (FindName("dtExame") is DatePicker dp && dp.Parent is StackPanel sp)
+            {
+                sp.Children.Add(btnSalvar);
+            }
+
+            txtCPF.IsEnabled = false;
+        }
+
+        private void CarregarExame(int idExame)
+        {
+            try
+            {
+                using (var conn = Conexao.ObterConexao())
+                using (var cmd = new MySqlCommand(
+                    @"SELECT e.cpf_paciente, e.psa_total, e.psa_livre, e.densidade_psa, e.data_exame, e.caminho_pdf,
+                             p.nome, p.idade, p.data_nascimento
+                      FROM exame e
+                      INNER JOIN paciente p ON p.cpf = e.cpf_paciente
+                      WHERE e.id_exame = @id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", idExame);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (!reader.Read())
+                        {
+                            Services.DialogService.Warn("Exame não encontrado.");
+                            Close();
+                            return;
+                        }
+
+                        txtCPF.Text = reader["cpf_paciente"]?.ToString() ?? string.Empty;
+                        txtPSATotal.Text = reader["psa_total"]?.ToString() ?? string.Empty;
+                        txtPSALivre.Text = reader["psa_livre"]?.ToString() ?? string.Empty;
+                        txtDensidade.Text = reader["densidade_psa"]?.ToString() ?? string.Empty;
+
+                        if (reader["data_exame"] != DBNull.Value)
+                            dtExame.SelectedDate = Convert.ToDateTime(reader["data_exame"]);
+
+                        _nomePaciente = reader["nome"]?.ToString() ?? string.Empty;
+                        txtIdade.Text = reader["idade"]?.ToString() ?? string.Empty;
+
+                        if (reader["data_nascimento"] != DBNull.Value)
+                            _dataNascimento = Convert.ToDateTime(reader["data_nascimento"]).ToString("dd/MM/yyyy");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Services.DialogService.Error("Erro ao carregar exame: " + ex.Message);
+                Close();
+            }
+        }
+
+        private void SalvarExame_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_editingExameId.HasValue)
+            {
+                Services.DialogService.Warn("Nenhum exame selecionado para edição.");
+                return;
+            }
+
+            try
+            {
+                var exameValidation = Validators.ExameValidator.Validate(
+                    txtCPF.Text?.Trim(),
+                    txtPSATotal.Text?.Trim(),
+                    txtPSALivre.Text?.Trim(),
+                    txtDensidade.Text?.Trim(),
+                    string.Empty
+                );
+
+                if (!exameValidation.IsValid)
+                {
+                    Services.DialogService.Warn($"Validação do exame falhou: {exameValidation.Message}");
+                    return;
+                }
+
+                using (var conn = Conexao.ObterConexao())
+                using (var cmd = new MySqlCommand(
+                    @"UPDATE exame
+                      SET psa_total = @psa_total,
+                          psa_livre = @psa_livre,
+                          densidade_psa = @densidade_psa,
+                          data_exame = @data_exame
+                      WHERE id_exame = @id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@psa_total", exameValidation.Value.PsaTotal);
+                    cmd.Parameters.AddWithValue("@psa_livre", exameValidation.Value.PsaLivre);
+                    cmd.Parameters.AddWithValue("@densidade_psa", exameValidation.Value.Densidade);
+                    cmd.Parameters.AddWithValue("@data_exame", dtExame.SelectedDate ?? (object)DateTime.Now);
+                    cmd.Parameters.AddWithValue("@id", _editingExameId.Value);
+
+                    int affected = cmd.ExecuteNonQuery();
+                    if (affected == 0)
+                    {
+                        Services.DialogService.Warn("Exame não encontrado. Nenhuma alteração foi salva.");
+                        return;
+                    }
+                }
+
+                Services.DialogService.Info("Exame atualizado com sucesso.");
+                INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+                Close();
+            }
+            catch (Exception ex)
+            {
+                Services.DialogService.Error("Erro ao salvar exame: " + ex.Message);
+            }
         }
 
         private void DtExame_Loaded(object? sender, RoutedEventArgs e)
@@ -31,7 +193,6 @@ namespace INTERFACE_POSTRATA
             try
             {
                 var dp = dtExame;
-                // localizar o DatePickerTextBox na árvore visual
                 var textBox = FindVisualChild<System.Windows.Controls.Primitives.DatePickerTextBox>(dp);
                 if (textBox != null)
                 {
@@ -74,7 +235,7 @@ namespace INTERFACE_POSTRATA
             _lastSelection[tb.Name] = tb.SelectionStart;
         }
 
-        private void TxtDate_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        private void TxtDate_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             if (!System.Text.RegularExpressions.Regex.IsMatch(e.Text, "^[0-9]+$")) { e.Handled = true; return; }
             var tb = sender as System.Windows.Controls.TextBox;
@@ -115,7 +276,7 @@ namespace INTERFACE_POSTRATA
 
                 using (var conn = Conexao.ObterConexao())
                 {
-                    using (var cmd = new MySqlCommand("SELECT idade, nome FROM paciente WHERE cpf = @cpf", conn))
+                    using (var cmd = new MySqlCommand("SELECT idade, nome, data_nascimento FROM paciente WHERE cpf = @cpf", conn))
                     {
                         cmd.Parameters.AddWithValue("@cpf", cpf);
                         using (var reader = cmd.ExecuteReader())
@@ -127,8 +288,16 @@ namespace INTERFACE_POSTRATA
                                 {
                                     txtIdade.Text = idadeObj.ToString();
                                 }
-                                // Também pode preencher nome do paciente caso queira
-                                // string nome = reader["nome"]?.ToString() ?? string.Empty;
+
+                                _nomePaciente = reader["nome"]?.ToString() ?? string.Empty;
+                                if (reader["data_nascimento"] != DBNull.Value)
+                                {
+                                    _dataNascimento = Convert.ToDateTime(reader["data_nascimento"]).ToString("dd/MM/yyyy");
+                                }
+                                else
+                                {
+                                    _dataNascimento = string.Empty;
+                                }
                             }
                         }
                     }
@@ -140,175 +309,82 @@ namespace INTERFACE_POSTRATA
             }
         }
 
-        private void GerarLaudoHtml_Click(object sender, RoutedEventArgs e)
+        // ============ CRM -> NOME DO MÉDICO ============
+
+        private void TxtCRMMedico_LostFocus(object sender, RoutedEventArgs e)
+        {
+            ConsultarMedicoPorCRM();
+        }
+
+        private void TxtCRMMedico_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                ConsultarMedicoPorCRM();
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>
+        /// Consulta funcionario pelo CRM (somente cargo=MEDICO) e preenche
+        /// automaticamente o nome. Limpa o nome e avisa se o CRM não
+        /// corresponder a um médico cadastrado. Mantém o RM em memória
+        /// para uso interno (txtRM).
+        /// </summary>
+        private void ConsultarMedicoPorCRM()
         {
             try
             {
-                // Coletar dados de formulário
-                string paciente = "Paciente Teste";
-                string medico = INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoName ?? "";
-                string crm = "CRM 123456";
+                string crm = txtCRMMedico?.Text?.Trim() ?? string.Empty;
 
-                string idadeRaw = txtIdade.Text.Trim();
-                string psaTotalRaw = txtPSATotal.Text.Trim();
-                string psaLivreRaw = txtPSALivre.Text.Trim();
-                string densidadeRaw = txtDensidade.Text.Trim();
+                // Limpa estado anterior
+                txtNomeMedico.Text = string.Empty;
+                txtRM.Text = string.Empty;
 
-                if (string.IsNullOrEmpty(idadeRaw) || string.IsNullOrEmpty(psaTotalRaw) || string.IsNullOrEmpty(psaLivreRaw))
+                if (string.IsNullOrWhiteSpace(crm))
                 {
-                    Services.DialogService.Warn("Por favor, preencha Idade, PSA Total e PSA Livre antes de gerar o laudo HTML.");
+                    // Sem CRM: não tenta consultar, deixa o usuário prosseguir.
                     return;
                 }
 
-                string? idade = Services.NumberFormatHelper.NormalizarNumero(idadeRaw);
-                string? psaTotal = Services.NumberFormatHelper.NormalizarNumero(psaTotalRaw);
-                string? psaLivre = Services.NumberFormatHelper.NormalizarNumero(psaLivreRaw);
-                string? densidade = Services.NumberFormatHelper.NormalizarNumero(densidadeRaw);
-
-                if (string.IsNullOrWhiteSpace(densidadeRaw))
+                using (MySqlConnection conn = Conexao.ObterConexao())
                 {
-                    Services.DialogService.Info("PSA Densidade não informado. O laudo HTML será gerado sem considerar a densidade.");
-                    densidade = "-";
-                }
+                    const string sql =
+                        "SELECT nome, rm " +
+                        "FROM funcionario " +
+                        "WHERE crm = @crm AND UPPER(cargo) = 'MEDICO' " +
+                        "LIMIT 1;";
 
-                if (idade == null || psaTotal == null || psaLivre == null)
-                {
-                    Services.DialogService.Warn("Um ou mais campos contêm valores inválidos. Verifique os campos numéricos.");
-                    return;
-                }
-
-                var exame = new Models.Exame
-                {
-                    PacienteNome = paciente,
-                    Idade = txtIdade.Text.Trim(),
-                    Medico = medico,
-                    Crm = crm,
-                    PsaTotal = txtPSATotal.Text.Trim(),
-                    PsaLivre = txtPSALivre.Text.Trim(),
-                    PsaDensidade = string.IsNullOrWhiteSpace(txtDensidade.Text) ? "-" : txtDensidade.Text.Trim(),
-                    Resultado = "" // resultado pode ser preenchido manualmente ou pela IA; deixamos vazio aqui
-                };
-
-                Services.HtmlLaudoService.GenerateAndOpenHtml(exame);
-            }
-            catch (Exception ex)
-            {
-                Services.DialogService.Error($"Erro ao gerar laudo HTML: {ex.Message}");
-            }
-        }
-
-        private void LimparCampos_Click(object sender, RoutedEventArgs e)
-        {
-            txtCPF.Text = string.Empty;
-            txtRM.Text = string.Empty;
-            txtIdade.Text = string.Empty;
-            txtPSATotal.Text = string.Empty;
-            txtPSALivre.Text = string.Empty;
-            txtDensidade.Text = string.Empty;
-            txtPDFSelecionado.Text = "Nenhum PDF selecionado";
-            txtPSAEncontrado.Text = "--";
-            dtExame.SelectedDate = null;
-            // Garantir que o botão de confirmar esteja desabilitado ao limpar
-            try { btnConfirmarPSA.IsEnabled = false; } catch { }
-        }
-
-        private void ConfirmarPSA_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var valor = txtPSAEncontrado.Text?.Trim();
-                if (!string.IsNullOrEmpty(valor) && valor != "--")
-                {
-                    txtPSATotal.Text = valor.Replace('.', ',');
-                    btnConfirmarPSA.IsEnabled = false;
-                    MessageBox.Show("PSA confirmado e preenchido no campo PSA Total.", "Confirmado", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
-                {
-                    MessageBox.Show("Nenhum valor de PSA válido para confirmar.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Erro ao confirmar PSA: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void SelecionarPDF_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var ofd = new Microsoft.Win32.OpenFileDialog();
-                ofd.Filter = "PDF files (*.pdf)|*.pdf";
-                bool? result = ofd.ShowDialog();
-                if (result == true)
-                {
-                    string caminho = ofd.FileName;
-                    // Verificar existência do arquivo antes de tentar importar
-                    if (!System.IO.File.Exists(caminho))
+                    using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                     {
-                        Services.DialogService.Error("Arquivo PDF não encontrado.");
-                        return;
-                    }
+                        cmd.Parameters.AddWithValue("@crm", crm);
 
-                    txtPDFSelecionado.Text = System.IO.Path.GetFileName(caminho);
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string nome = reader["nome"]?.ToString() ?? string.Empty;
+                                string rm = reader["rm"]?.ToString() ?? string.Empty;
 
-                    var exame = Services.PdfImportService.ImportFromPdf(caminho);
-                    if (exame != null && !string.IsNullOrWhiteSpace(exame.PsaTotal))
-                    {
-                        txtPSAEncontrado.Text = exame.PsaTotal;
-                        btnConfirmarPSA.IsEnabled = true;
-                    }
-                    else
-                    {
-                        txtPSAEncontrado.Text = "--";
-                        btnConfirmarPSA.IsEnabled = false;
+                                txtNomeMedico.Text = nome;
+                                txtRM.Text = rm; // mantido em memória para identificação interna
+                            }
+                            else
+                            {
+                                txtNomeMedico.Text = string.Empty;
+                                txtRM.Text = string.Empty;
+                                Services.DialogService.Warn(
+                                    "CRM não corresponde a um médico cadastrado (cargo=MEDICO).");
+                            }
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Services.DialogService.Error($"Erro ao selecionar PDF: {ex.Message}");
-            }
-        }
-
-        private void BtnImportarPdf_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var ofd = new Microsoft.Win32.OpenFileDialog();
-                ofd.Filter = "PDF files (*.pdf)|*.pdf";
-                bool? result = ofd.ShowDialog();
-                if (result == true)
-                {
-                    string caminho = ofd.FileName;
-                    // Validar existência antes da importação
-                    if (!System.IO.File.Exists(caminho))
-                    {
-                        Services.DialogService.Error("Arquivo PDF não encontrado.");
-                        return;
-                    }
-
-                    txtPDFSelecionado.Text = System.IO.Path.GetFileName(caminho);
-
-                    var exame = Services.PdfImportService.ImportFromPdf(caminho);
-                    if (exame == null)
-                    {
-                        Services.DialogService.Warn("Não foi possível extrair informações do PDF.");
-                        return;
-                    }
-
-                    // Preencher campos quando encontrados (mantendo compatibilidade com comportamento atual)
-                    if (!string.IsNullOrEmpty(exame.PsaTotal)) txtPSATotal.Text = exame.PsaTotal;
-                    if (!string.IsNullOrEmpty(exame.PsaLivre)) txtPSALivre.Text = exame.PsaLivre;
-                    if (!string.IsNullOrEmpty(exame.PsaDensidade)) txtDensidade.Text = exame.PsaDensidade;
-
-                    Services.DialogService.Info("Importação concluída. Revise os valores antes de salvar.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Services.DialogService.Error($"Erro ao importar PDF: {ex.Message}");
+                txtNomeMedico.Text = string.Empty;
+                txtRM.Text = string.Empty;
+                Services.DialogService.Error("Erro ao consultar médico por CRM: " + ex.Message);
             }
         }
 
@@ -316,81 +392,58 @@ namespace INTERFACE_POSTRATA
         {
             try
             {
-                // Dados do paciente (você pode querer buscar do banco de dados)
-                string paciente = "Paciente Teste";
-                // usar medico logado quando disponível
-                string medico = INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoName ?? "";
-                string crm = "CRM 123456";
+                string paciente = string.IsNullOrWhiteSpace(_nomePaciente) ? "—" : _nomePaciente;
+                // Prioriza o nome/CRM/RM preenchidos a partir da busca por CRM.
+                // Caso o usuário não tenha informado CRM, faz fallback para a sessão.
+                string medico = !string.IsNullOrWhiteSpace(txtNomeMedico?.Text)
+                    ? txtNomeMedico.Text.Trim()
+                    : (INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioName ?? "");
+                string crm = !string.IsNullOrWhiteSpace(txtCRMMedico?.Text)
+                    ? txtCRMMedico.Text.Trim()
+                    : (INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioCrm ?? "");
+                string cpf = txtCPF.Text?.Trim() ?? "";
+                string dataNascimento = _dataNascimento;
+                string dataExame = dtExame.SelectedDate.HasValue
+                    ? dtExame.SelectedDate.Value.ToString("dd/MM/yyyy")
+                    : "";
 
-                // Coletar e normalizar os dados de entrada
                 string idadeRaw = txtIdade.Text.Trim();
                 string psaTotalRaw = txtPSATotal.Text.Trim();
                 string psaLivreRaw = txtPSALivre.Text.Trim();
                 string densidadeRaw = txtDensidade.Text.Trim();
 
-                // Validar campos obrigatórios antes de chamar a IA (densidade pode faltar)
                 if (string.IsNullOrEmpty(idadeRaw) || string.IsNullOrEmpty(psaTotalRaw) || string.IsNullOrEmpty(psaLivreRaw))
                 {
                     Services.DialogService.Warn("Por favor, preencha Idade, PSA Total e PSA Livre antes de gerar o laudo.");
                     return;
                 }
 
-                // Normalizar e validar números (aceita "," ou ".")
                 string? idade = Services.NumberFormatHelper.NormalizarNumero(idadeRaw);
                 string? psaTotal = Services.NumberFormatHelper.NormalizarNumero(psaTotalRaw);
                 string? psaLivre = Services.NumberFormatHelper.NormalizarNumero(psaLivreRaw);
                 string? densidade = Services.NumberFormatHelper.NormalizarNumero(densidadeRaw);
 
-                // Se densidade estiver ausente, avisar e usar valor 0 para chamada à IA
                 if (string.IsNullOrWhiteSpace(densidadeRaw))
                 {
                     Services.DialogService.Info("PSA Densidade não foi informado. O laudo será gerado sem considerar a densidade.");
                     densidade = "0";
                 }
 
-                // Verificar se a normalização foi bem-sucedida
                 if (idade == null || psaTotal == null || psaLivre == null || densidade == null)
                 {
-                    Services.DialogService.Warn("Um ou mais campos contêm valores inválidos. Por favor, insira números válidos (use . ou , para decimais)." );
+                    Services.DialogService.Warn("Um ou mais campos contêm valores inválidos. Por favor, insira números válidos (use . ou , para decimais).");
                     return;
                 }
 
-                // Obter diretório do executável
-                string dirExecavel = AppDomain.CurrentDomain.BaseDirectory;
-
-                // Procurar pelo script executar_ia.py em múltiplos locais
-                string caminhoScriptIA = null;
-
-                // Tentar em múltiplos caminhos (estrutura: bin\Debug\net10.0-windows\)
-                string[] caminhosPossiveis = new[]
-                {
-                    System.IO.Path.Combine(dirExecavel, "..", "..", "..", "..", "executar_ia.py"),  // ../../../../ (sai de net10.0-windows/Debug/bin/INTERFACE_POSTRATA) para raiz
-                    System.IO.Path.Combine(dirExecavel, "..", "..", "..", "executar_ia.py"),       // ../../../ (sai de net10.0-windows/Debug/bin)
-                    System.IO.Path.Combine(dirExecavel, "..", "..", "executar_ia.py"),             // ../../ (sai de Debug/bin)
-                    System.IO.Path.Combine(dirExecavel, "..", "executar_ia.py"),                   // ../ (sai de bin)
-                    System.IO.Path.Combine(dirExecavel, "executar_ia.py")                          // direto em BaseDirectory
-                };
-
-                foreach (var caminho in caminhosPossiveis)
-                {
-                    string caminhoCompleto = System.IO.Path.GetFullPath(caminho);
-                    if (System.IO.File.Exists(caminhoCompleto))
-                    {
-                        caminhoScriptIA = caminhoCompleto;
-                        break;
-                    }
-                }
-
-                // Verificar se o script foi encontrado
+                string? caminhoScriptIA = EncontrarScriptIA();
                 if (string.IsNullOrEmpty(caminhoScriptIA))
                 {
-                    string mensagemErro = $"Arquivo executar_ia.py não encontrado.\n\nProcurou em:\n" +
-                        string.Join("\n", caminhosPossiveis.Select(p => System.IO.Path.GetFullPath(p)));
-                    Services.DialogService.Error(mensagemErro);
+                    Services.DialogService.Error(
+                        "Arquivo IA/executar_ia.py não encontrado.\n\n" +
+                        "Verifique se a pasta IA existe na raiz do repositório com executar_ia.py, IA_generator.py, dados_psa_clinica.csv e IA.joblib.");
                     return;
                 }
 
-                // Encontrar Python instalado
                 string pythonExe = EncontrarPython();
                 if (string.IsNullOrEmpty(pythonExe))
                 {
@@ -398,17 +451,8 @@ namespace INTERFACE_POSTRATA
                     return;
                 }
 
-                // Debug: Exibir dados sendo enviados para a IA
-                string debugMsg = $"Dados enviados para a IA:\n" +
-                                 $"Idade: {idade}\n" +
-                                 $"PSA Total: {psaTotal}\n" +
-                                 $"PSA Livre: {psaLivre}\n" +
-                                 $"Densidade: {densidade}\n\n" +
-                                 $"Relação L/T calculada pela IA: {psaLivre} / {psaTotal}";
+                System.Diagnostics.Debug.WriteLine($"Dados enviados para a IA: Idade={idade} PSATotal={psaTotal} PSALivre={psaLivre} Densidade={densidade}");
 
-                System.Diagnostics.Debug.WriteLine(debugMsg);
-
-                // Configurar processo
                 ProcessStartInfo psi = new ProcessStartInfo();
                 psi.FileName = pythonExe;
                 psi.Arguments = $"\"{caminhoScriptIA}\" {idade} {psaTotal} {psaLivre} {densidade}";
@@ -417,21 +461,17 @@ namespace INTERFACE_POSTRATA
                 psi.UseShellExecute = false;
                 psi.CreateNoWindow = true;
 
-                // Debug: Exibir comando sendo executado
                 System.Diagnostics.Debug.WriteLine($"Comando: {pythonExe} {psi.Arguments}");
 
-                // Executar IA
                 Process processo = Process.Start(psi);
                 processo.WaitForExit();
 
                 string saida = processo.StandardOutput.ReadToEnd().Trim();
                 string erro = processo.StandardError.ReadToEnd().Trim();
 
-                // Debug: Exibir saída da IA
                 System.Diagnostics.Debug.WriteLine($"Saída da IA: {saida}");
                 System.Diagnostics.Debug.WriteLine($"Erro da IA: {erro}");
 
-                // Tratar resultado
                 string resultadoIA = string.Empty;
 
                 if (!string.IsNullOrEmpty(erro))
@@ -443,25 +483,39 @@ namespace INTERFACE_POSTRATA
                 if (!string.IsNullOrEmpty(saida))
                 {
                     resultadoIA = saida.ToUpper().Trim();
-                    // Validar resultado
                     if (resultadoIA != "SUSPEITO" && resultadoIA != "BENIGNO")
                     {
                         Services.DialogService.Warn($"Resultado inesperado da IA: {resultadoIA}\nUsando valor padrão: BENIGNO");
-                        resultadoIA = "BENIGNO"; // valor padrão
+                        resultadoIA = "BENIGNO";
                     }
                 }
                 else
                 {
                     Services.DialogService.Warn("A IA não retornou um resultado. Usando valor padrão: BENIGNO");
-                    resultadoIA = "BENIGNO"; // valor padrão
+                    resultadoIA = "BENIGNO";
                 }
 
-                // Tentar salvar exame no banco (se houver tabela 'exame')
+                // Persistir exame + laudo (incluindo NOTAS) no banco.
+                int? idExameInserido = null;
+                int? idLaudoInserido = null;
                 try
                 {
                     using (MySqlConnection conn = Conexao.ObterConexao())
                     {
-                        // Inserir no esquema correto da tabela 'exame'
+                        var exameValidation = Validators.ExameValidator.Validate(
+                            txtCPF.Text?.Trim(),
+                            txtPSATotal.Text?.Trim(),
+                            txtPSALivre.Text?.Trim(),
+                            txtDensidade.Text?.Trim(),
+                            string.Empty
+                        );
+
+                        if (!exameValidation.IsValid)
+                        {
+                            Services.DialogService.Warn($"Validação do exame falhou: {exameValidation.Message}");
+                            return;
+                        }
+
                         string sqlInsert = @"INSERT INTO exame
                         (
                             cpf_paciente,
@@ -479,35 +533,47 @@ namespace INTERFACE_POSTRATA
                             @densidade_psa,
                             @data_exame,
                             @caminho_pdf
-                        );";
+                        );
+                        SELECT LAST_INSERT_ID();";
 
                         using (MySqlCommand cmd = new MySqlCommand(sqlInsert, conn))
                         {
-                            // Validar via ExameValidator antes de inserir
-                            var exameValidation = Validators.ExameValidator.Validate(
-                                txtCPF.Text?.Trim(),
-                                txtPSATotal.Text?.Trim(),
-                                txtPSALivre.Text?.Trim(),
-                                txtDensidade.Text?.Trim(),
-                                txtPDFSelecionado.Text == "Nenhum PDF selecionado" ? string.Empty : txtPDFSelecionado.Text
-                            );
-
-                            if (!exameValidation.IsValid)
-                            {
-                                Services.DialogService.Warn($"Validação do exame falhou: {exameValidation.Message}");
-                                return;
-                            }
-
-                            // cpf do paciente vem do campo do formulário
                             cmd.Parameters.AddWithValue("@cpf_paciente", exameValidation.Value.CpfPaciente);
                             cmd.Parameters.AddWithValue("@psa_total", exameValidation.Value.PsaTotal);
                             cmd.Parameters.AddWithValue("@psa_livre", exameValidation.Value.PsaLivre);
                             cmd.Parameters.AddWithValue("@densidade_psa", exameValidation.Value.Densidade);
                             cmd.Parameters.AddWithValue("@data_exame", dtExame.SelectedDate ?? (object)DateTime.Now);
-                            // caminho do PDF (se o usuário importou) - armazenar apenas o nome do arquivo por enquanto
-                            cmd.Parameters.AddWithValue("@caminho_pdf", exameValidation.Value.CaminhoPdf ?? string.Empty);
+                            cmd.Parameters.AddWithValue("@caminho_pdf", string.Empty);
 
-                            try { cmd.ExecuteNonQuery(); } catch (Exception exDb) { System.Diagnostics.Debug.WriteLine($"Erro ao inserir exame: {exDb.Message}"); }
+                            var inserted = cmd.ExecuteScalar();
+                            if (inserted != null && inserted != DBNull.Value)
+                                idExameInserido = Convert.ToInt32(inserted);
+                        }
+
+                        if (idExameInserido.HasValue)
+                        {
+                            string interpretacaoPadrao = resultadoIA == "SUSPEITO"
+                                ? "Os valores informados apresentam características compatíveis com risco elevado para alterações prostáticas, sendo recomendada investigação complementar."
+                                : "Os valores informados apresentam características compatíveis com acompanhamento clínico e monitoramento periódico.";
+
+                            // Notas são fixas e somente leitura — não persistidas no banco.
+                            string sqlInsertLaudo = @"INSERT INTO laudo
+                                (id_exame, classificacao, interpretacao, data_laudo)
+                                VALUES
+                                (@id_exame, @classificacao, @interpretacao, @data_laudo);
+                                SELECT LAST_INSERT_ID();";
+
+                            using (MySqlCommand cmdL = new MySqlCommand(sqlInsertLaudo, conn))
+                            {
+                                cmdL.Parameters.AddWithValue("@id_exame", idExameInserido.Value);
+                                cmdL.Parameters.AddWithValue("@classificacao", resultadoIA);
+                                cmdL.Parameters.AddWithValue("@interpretacao", interpretacaoPadrao);
+                                cmdL.Parameters.AddWithValue("@data_laudo", DateTime.Now.Date);
+
+                                var insertedL = cmdL.ExecuteScalar();
+                                if (insertedL != null && insertedL != DBNull.Value)
+                                    idLaudoInserido = Convert.ToInt32(insertedL);
+                            }
                         }
                     }
                 }
@@ -516,7 +582,7 @@ namespace INTERFACE_POSTRATA
                     System.Diagnostics.Debug.WriteLine($"Erro ao conectar ao banco: {exConn.Message}");
                 }
 
-                // Abrir tela de laudo
+                // Abrir tela de laudo (passando idLaudo para que possa ser editado/salvo)
                 GerarLaudo tela = new GerarLaudo(
                     paciente,
                     idade,
@@ -525,7 +591,11 @@ namespace INTERFACE_POSTRATA
                     psaTotal,
                     psaLivre,
                     densidade,
-                    resultadoIA
+                    resultadoIA,
+                    cpf,
+                    dataNascimento,
+                    dataExame,
+                    idLaudoInserido
                 );
                 tela.Show();
                 INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
@@ -537,14 +607,34 @@ namespace INTERFACE_POSTRATA
             }
         }
 
+        private static string? EncontrarScriptIA()
+        {
+            string dirExecavel = AppDomain.CurrentDomain.BaseDirectory;
+            var caminhosProcurados = new List<string>();
+
+            var diretorioAtual = new DirectoryInfo(dirExecavel);
+            while (diretorioAtual != null)
+            {
+                string candidato = System.IO.Path.Combine(diretorioAtual.FullName, "IA", "executar_ia.py");
+                caminhosProcurados.Add(candidato);
+                if (File.Exists(candidato))
+                    return candidato;
+                diretorioAtual = diretorioAtual.Parent;
+            }
+
+            System.Diagnostics.Debug.WriteLine(
+                "IA/executar_ia.py não encontrado. Caminhos verificados:\n" +
+                string.Join("\n", caminhosProcurados));
+
+            return null;
+        }
+
         private string EncontrarPython()
         {
-            // Procurar Python no PATH
             string pythonExe = "python";
 
             try
             {
-                // Tentar usar 'where python' no Windows
                 ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", "/c where python")
                 {
                     RedirectStandardOutput = true,
@@ -562,7 +652,6 @@ namespace INTERFACE_POSTRATA
             }
             catch { }
 
-            // Caminhos comuns onde Python pode estar
             string[] caminhosPython = new[]
             {
                 @"C:\Python311\python.exe",
@@ -584,10 +673,8 @@ namespace INTERFACE_POSTRATA
                 }
             }
 
-            return pythonExe; // retorna "python" como fallback
+            return pythonExe;
         }
-
-        // Usamos Services.NumberFormatHelper.NormalizarNumero em vez do método local
 
         private void VoltarMenu_Click(object sender, RoutedEventArgs e)
         {

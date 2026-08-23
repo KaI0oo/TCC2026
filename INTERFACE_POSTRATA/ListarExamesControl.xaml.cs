@@ -1,19 +1,32 @@
 using System;
 using System.Data;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using INTERFACE_POSTRATA.Banco;
+using INTERFACE_POSTRATA.Helpers;
 using MySql.Data.MySqlClient;
 
 namespace INTERFACE_POSTRATA
 {
     public partial class ListarExamesControl : UserControl
     {
-        public ListarExamesControl()
+        private readonly bool _modoEdicao;
+
+        public ListarExamesControl(bool modoEdicao = false)
         {
+            _modoEdicao = modoEdicao;
             InitializeComponent();
+            ConfigureAcesso();
             CarregarExames();
+        }
+
+        private void ConfigureAcesso()
+        {
+            if (_modoEdicao)
+                btnEditar.Visibility = Visibility.Visible;
+
+            if (Session.IsSecretaria)
+                btnTodos.Visibility = Visibility.Collapsed;
         }
 
         public void CarregarExames(string cpf = null)
@@ -22,7 +35,6 @@ namespace INTERFACE_POSTRATA
             {
                 using (MySqlConnection conn = Conexao.ObterConexao())
                 {
-                    // Seleciona exames e faz JOIN com paciente para obter nome
                     string sql = @"SELECT e.id_exame, e.cpf_paciente, p.nome AS paciente_nome, e.psa_total, e.psa_livre, e.densidade_psa, e.data_exame, e.caminho_pdf
                                    FROM exame e
                                    INNER JOIN paciente p ON p.cpf = e.cpf_paciente";
@@ -59,14 +71,29 @@ namespace INTERFACE_POSTRATA
             CarregarExames();
         }
 
+        private void BtnEditar_Click(object sender, RoutedEventArgs e)
+        {
+            if (dgExames.SelectedItem is not DataRowView row)
+            {
+                MessageBox.Show("Selecione um exame na lista para editar.", "Atenção", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!int.TryParse(row["id_exame"]?.ToString(), out int idExame))
+            {
+                MessageBox.Show("Exame selecionado inválido.", "Atenção", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var tela = new CadastroExame(idExame);
+            tela.Show();
+        }
+
         private void BtnVoltar_Click(object sender, RoutedEventArgs e)
         {
             var win = Window.GetWindow(this) as Window1;
             if (win != null)
-            {
-                // Restaurar o painel principal usando o mesmo método do menu Início
                 win.RestoreMainPanel();
-            }
         }
     }
 }

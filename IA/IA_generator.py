@@ -1,42 +1,123 @@
-import os
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from pathlib import Path
+import joblib
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.metrics import classification_report, confusion_matrix
-import pickle
+from sklearn.metrics import classification_report, confusion_matrix, recall_score, accuracy_score
 
-pasta_atual = os.path.dirname(os.path.abspath(__file__))
-caminho_csv = os.path.join(pasta_atual, "dados_psa_clinica.csv")
+def carregar_dados(caminho_arquivo):
+    """
+    Carrega o dataset e separa as features da variável alvo (target).
+    
+    Parâmetros:
+        caminho_arquivo (str ou Path): Caminho absoluto ou relativo para o CSV.
+        
+    Retorna:
+        X (DataFrame): Variáveis independentes (features).
+        y (Series): Variável dependente (target).
+    """
+    df = pd.read_csv(caminho_arquivo)
+    X = df.drop('Resultado', axis=1)
+    y = df['Resultado']
+    return X, y
 
-df = pd.read_csv(caminho_csv)
-X = df.drop('Resultado', axis=1)
-y = df['Resultado']
+def treinar_modelo_prostata(X, y, test_size=0.3, random_state=42):
+    """
+    Realiza o particionamento estratificado dos dados, compara os algoritmos 
+    Arvore de Decisao e Random Forest otimizando hiperparametros via GridSearchCV 
+    com foco na metrica de Recall, e aplica a calibracao de probabilidades no 
+    modelo vencedor.
+    """
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=random_state, stratify=y
+    )
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-# Treinar modelo original
-clf = DecisionTreeClassifier(max_depth=3, criterion='entropy', random_state=42)
-clf.fit(X_train, y_train)
-# CALIBRAR o modelo (NOVO!)
-clf_calibrated = CalibratedClassifierCV(clf, cv=5, method='sigmoid')
-clf_calibrated.fit(X_train, y_train)
+    modelos_para_testar = {
+        'Arvore_Decisao': {
+            'modelo': DecisionTreeClassifier(class_weight='balanced', random_state=random_state),
+            'parametros': {
+                'max_depth': [3, 5, 7, None],
+                'criterion': ['gini', 'entropy']
+            }
+        },
+        'Random_Forest': {
+            'modelo': RandomForestClassifier(class_weight='balanced', random_state=random_state),
+            'parametros': {
+                'max_depth': [3, 5, 7, None],
+                'n_estimators': [50, 100, 200]
+            }
+        }
+    }
 
-def gerar_modelo():
-    caminho_modelo = os.path.join(pasta_atual, "IA.pkl")
+    melhor_recall_cv = 0
+    melhor_modelo_base = None
 
-    with open(caminho_modelo, "wb") as arquivo:
-        pickle.dump(clf_calibrated, arquivo)
+    for nome, config in modelos_para_testar.items():
+        grid = GridSearchCV(
+            estimator=config['modelo'],
+            param_grid=config['parametros'],
+            cv=5,
+            scoring='recall',
+            n_jobs=-1
+        )
+        
+        grid.fit(X_train, y_train)
+        
+        if grid.best_score_ > melhor_recall_cv:
+            melhor_recall_cv = grid.best_score_
+            melhor_modelo_base = grid.best_estimator_
 
-def gerar_metricas_avaliacao():
-    print(f"Acurácia do modelo calibrado: {(clf_calibrated.score(X_test, y_test) * 100):.2f}%")
-    y_pred = clf_calibrated.predict(X_test)
-    print("Relatório de Classificação:\n", classification_report(y_test, y_pred))
+    clf_calibrated = CalibratedClassifierCV(melhor_modelo_base, cv=5, method='sigmoid')
+    clf_calibrated.fit(X_train, y_train)
+
+    return clf_calibrated, X_test, y_test
+
+def gerar_metricas_avaliacao(modelo, X_test, y_test):
+    """
+    Avalia o modelo utilizando o conjunto de teste, focando no Recall 
+    e na desconstrução da Matriz de Confusão.
+    """
+    y_pred = modelo.predict(X_test)
+    
+    acuracia = accuracy_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
-    print("--- Valores Isolados da Matriz ---")
-    print(f"Verdadeiros Negativos (Benignos Corretos): {tn}")
-    print(f"Falsos Positivos (Alarmes Falsos): {fp}")
-    print(f"Falsos Negativos (Casos perdidos!): {fn}")
-    print(f"Verdadeiros Positivos (Suspeitos Corretos): {tp}")
-    # print("Matriz de Confusão:\n", confusion_matrix(y_test, y_pred))
-# gerar_modelo()
-# gerar_metricas_avaliacao()
+    
+    relatorio_sklearn = classification_report(y_test, y_pred)
+    
+    relatorio_texto = (
+        "========================================\n"
+        "METRICAS PRINCIPAIS NO TESTE (Foco Medico)\n"
+        "========================================\n"
+        f"Acuracia Geral: {acuracia * 100:.2f}%\n"
+        f"Recall (Sensibilidade): {recall * 100:.2f}%\n\n"
+        "--- Relatorio de Classificacao Completo ---\n"
+        f"{relatorio_sklearn}\n"
+        "--- Matriz de Confusao ---\n"
+        f"VN (Saudaveis Corretos): {tn} | FP (Alarmes Falsos): {fp}\n"
+        f"FN (Casos Perdidos): {fn}     | VP (Suspeitos Corretos): {tp}\n"
+    )
+
+    return {
+        "acuracia": acuracia,
+        "recall": recall,
+        "matriz_confusao": {"vn": tn, "fp": fp, "fn": fn, "vp": tp},
+        "relatorio_texto": relatorio_texto
+    }
+
+def salvar_modelo(modelo, caminho_salvamento):
+    """
+    Garante a criação dos diretórios necessários e salva o modelo no formato joblib.
+    """
+    caminho = Path(caminho_salvamento)
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(modelo, caminho)
+    return True
+
+def carregar_modelo_salvo(caminho_modelo):
+    """
+    Carrega o arquivo do modelo serializado e o retorna pronto para uso.
+    """
+    return joblib.load(caminho_modelo)

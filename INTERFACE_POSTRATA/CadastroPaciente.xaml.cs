@@ -271,7 +271,7 @@ namespace INTERFACE_POSTRATA
                             );
 
                             // médico logado
-                            cmd.Parameters.AddWithValue("@medico", INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId ?? 0);
+                            cmd.Parameters.AddWithValue("@medico", INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioId ?? 0);
 
                             cmd.ExecuteNonQuery();
                         }
@@ -345,7 +345,7 @@ namespace INTERFACE_POSTRATA
                                 "@sangue",
                                 ((ComboBoxItem)cbSangue.SelectedItem)?.Content?.ToString() ?? string.Empty
                             );
-                            cmd.Parameters.AddWithValue("@medico", INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId ?? 0);
+                            cmd.Parameters.AddWithValue("@medico", INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioId ?? 0);
 
                             cmd.ExecuteNonQuery();
                         }
@@ -354,9 +354,22 @@ namespace INTERFACE_POSTRATA
                     // conn será fechado automaticamente pelo using
                 }
 
-                // Avançar para anamnese
-                var anamnese = new CadastroAnamnese();
-                anamnese.Show();
+                if (!string.IsNullOrWhiteSpace(_editingCpf))
+                {
+                    MessageBox.Show("Paciente atualizado com sucesso.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+                    INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
+                    this.Close();
+                    return;
+                }
+
+                MessageBox.Show("Paciente cadastrado com sucesso.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                if (!INTERFACE_POSTRATA.Helpers.Session.IsSecretaria)
+                {
+                    var anamnese = new CadastroAnamnese();
+                    anamnese.Show();
+                }
+
                 INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
                 this.Close();
             }

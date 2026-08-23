@@ -1,27 +1,47 @@
-import pickle
-import pandas as pd
 import sys
-import os
-from IA_generator import gerar_modelo, gerar_metricas_avaliacao
+import pandas as pd
+from pathlib import Path
+import IA_generator as ia 
 
-if not os.path.exists("C:\\TCC2026\\TCC2026_Prostata\\IA\\IA.pkl"):
-    gerar_modelo()
+# 1. Gerenciamento de Caminhos Relativos Seguros
+pasta_atual = Path(__file__).resolve().parent if '__file__' in globals() else Path.cwd()
+caminho_modelo = pasta_atual / "IA.joblib"
+caminho_dados = pasta_atual / "dados_psa_clinica.csv" 
 
-pasta_atual = os.path.dirname(os.path.abspath(__file__))
+# 2. Verifica se o modelo já existe
+if not caminho_modelo.exists():
+    try:
+        X, y = ia.carregar_dados(caminho_dados)
+        modelo_novo, _, _ = ia.treinar_modelo_prostata(X, y)
+        ia.salvar_modelo(modelo_novo, caminho_modelo)
+    except FileNotFoundError:
+        print("ERRO: Modelo não encontrado e arquivo de dados (CSV) ausente para treino.")
+        sys.exit(1)
 
-caminho_modelo = os.path.join(pasta_atual, "IA.pkl")
+# 3. Carrega o modelo
+modelo = ia.carregar_modelo_salvo(caminho_modelo)
 
-with open(caminho_modelo, "rb") as arquivo:
-    modelo = pickle.load(arquivo)
+# ==========================================
+# 3.5 Validação Segura dos Argumentos
+# ==========================================
+if len(sys.argv) < 5:
+    print("ERRO: Argumentos insuficientes. Esperado: Idade, PSA_Total, PSA_Livre, Densidade")
+    sys.exit(1)
 
-idade = float(sys.argv[1])
-psa_total = float(sys.argv[2])
-psa_livre = float(sys.argv[3])
-densidade = float(sys.argv[4])
+try:
+    idade = float(sys.argv[1])
+    psa_total = float(sys.argv[2])
+    psa_livre = float(sys.argv[3])
+    densidade = float(sys.argv[4])
+except ValueError:
+    print("ERRO: Os argumentos devem ser numericos. Formato invalido recebido do backend.")
+    sys.exit(1)
 
+# 4. Processamento das features
 relacao_lt = psa_livre / psa_total
 if relacao_lt > 1:
     relacao_lt /= 100
+    
 entrada = pd.DataFrame(
     [[psa_total, psa_livre, relacao_lt, idade, densidade]],
     columns=[
@@ -35,8 +55,8 @@ entrada = pd.DataFrame(
 
 resultado = modelo.predict(entrada)[0]
 
+# --- AS ULTIMAS LINHAS MANTIDAS INTACTAS PARA COMUNICACAO COM O PROJETO ---
 if resultado == 1:
     print("SUSPEITO")
 else:
     print("BENIGNO")
-# gerar_metricas_avaliacao()

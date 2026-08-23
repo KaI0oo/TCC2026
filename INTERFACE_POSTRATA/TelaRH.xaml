@@ -1,18 +1,54 @@
 <Window x:Class="INTERFACE_POSTRATA.TelaRH"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Tela RH"
-        WindowState="Maximized"
-        WindowStartupLocation="CenterScreen">
-    <Grid Background="#F4FDFD">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock Text="Área RH" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"/>
-            <TextBlock Text="Bem-vindo ao painel de Recursos Humanos." Margin="0,10,0,20" HorizontalAlignment="Center"/>
-            <Button Content="Cadastro de Profissionais" Width="220" Height="40" Click="CadastroProfissionais_Click"/>
-            <Button Content="Gerenciar Funcionários" Width="220" Height="40" Margin="0,10,0,0" Click="Conta_Click"/>
-            <Button Content="Alterar RH Principal" Width="220" Height="40" Margin="0,10,0,0" Click="AlterarRHPrincipal_Click"/>
-            <Button Content="Logout" Width="220" Height="40" Margin="0,10,0,0" Click="Logout_Click"/>
-            <Button Content="Fechar Programa" Width="220" Height="40" Margin="0,10,0,0" Click="FecharPrograma_Click"/>
-        </StackPanel>
+        Title="RH"
+        WindowStartupLocation="CenterScreen"
+        Style="{DynamicResource PoWindow}">
+
+    <Grid>
+        <Border Style="{StaticResource PoPanel}"
+                MaxWidth="520"
+                MinWidth="360"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Margin="20"
+                Padding="40">
+
+            <StackPanel HorizontalAlignment="Center">
+
+                <Label Content="Área RH"
+                       Style="{StaticResource PoTitleText}"
+                       Margin="0,0,0,20"/>
+
+                <TextBlock Text="Bem-vindo ao painel de Recursos Humanos."
+                           FontSize="18"
+                           Foreground="Gray"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,30"/>
+
+                <Button x:Name="btnAbrirSistema"
+                        Content="Abrir Sistema"
+                        Style="{StaticResource PoButtonPrimary}"
+                        Width="240"
+                        Margin="0,0,0,12"
+                        Click="AbrirSistema_Click"/>
+
+                <Button x:Name="btnLogout"
+                        Content="Logout"
+                        Style="{StaticResource PoButtonSecondary}"
+                        Width="240"
+                        Margin="0,0,0,12"
+                        Click="Logout_Click"/>
+
+                <Button x:Name="btnFechar"
+                        Content="Fechar"
+                        Style="{StaticResource PoButtonDanger}"
+                        Width="240"
+                        Click="Fechar_Click"/>
+
+            </StackPanel>
+        </Border>
     </Grid>
+
 </Window>

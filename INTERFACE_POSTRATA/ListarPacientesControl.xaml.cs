@@ -1,9 +1,9 @@
 using System;
 using System.Data;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using INTERFACE_POSTRATA.Banco;
+using INTERFACE_POSTRATA.Helpers;
 using MySql.Data.MySqlClient;
 
 namespace INTERFACE_POSTRATA
@@ -13,6 +13,8 @@ namespace INTERFACE_POSTRATA
         public ListarPacientesControl()
         {
             InitializeComponent();
+            if (Session.IsSecretaria)
+                btnAtualizar.Visibility = Visibility.Collapsed;
             CarregarPacientes();
         }
 

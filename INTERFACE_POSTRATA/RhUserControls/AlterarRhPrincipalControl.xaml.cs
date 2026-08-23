@@ -1,20 +1,22 @@
 using System;
 using System.Windows;
-using INTERFACE_POSTRATA.Banco;
+using System.Windows.Controls;
 using MySql.Data.MySqlClient;
 
-namespace INTERFACE_POSTRATA
+namespace INTERFACE_POSTRATA.RhUserControls
 {
-    public partial class AlterarRHPrincipal : Window
+    public partial class AlterarRhPrincipalControl : UserControl
     {
-        public AlterarRHPrincipal()
+        public AlterarRhPrincipalControl()
         {
             InitializeComponent();
         }
 
         private void Cancelar_Click(object sender, RoutedEventArgs e)
         {
-            this.Close();
+            txtTargetRM.Text = string.Empty;
+            txtTargetNome.Text = string.Empty;
+            txtCurrentRHPassword.Password = string.Empty;
         }
 
         private void Confirmar_Click(object sender, RoutedEventArgs e)
@@ -33,17 +35,16 @@ namespace INTERFACE_POSTRATA
                     return;
                 }
 
-                if (!INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioId.HasValue)
+                if (!Helpers.Session.CurrentFuncionarioId.HasValue)
                 {
                     MessageBox.Show("Usuário atual não identificado na sessão.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                int currentRm = INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioId.Value;
+                int currentRm = Helpers.Session.CurrentFuncionarioId.Value;
 
-                using (var conn = Conexao.ObterConexao())
+                using (var conn = Banco.Conexao.ObterConexao())
                 {
-                    // validar que sessão corresponde a um RH e senha batem
                     using (var cmd = new MySqlCommand("SELECT senha, cargo FROM funcionario WHERE rm = @rm", conn))
                     {
                         cmd.Parameters.AddWithValue("@rm", currentRm);
@@ -62,7 +63,6 @@ namespace INTERFACE_POSTRATA
                                 MessageBox.Show("A operação requer que o usuário atual seja RH principal.", "Permissão", MessageBoxButton.OK, MessageBoxImage.Warning);
                                 return;
                             }
-
                             if (!senhaAtual.Equals(txtCurrentRHPassword.Password))
                             {
                                 MessageBox.Show("Senha do RH atual incorreta.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -71,7 +71,6 @@ namespace INTERFACE_POSTRATA
                         }
                     }
 
-                    // verificar existência do target
                     using (var cmd2 = new MySqlCommand("SELECT rm, cargo FROM funcionario WHERE rm = @rm", conn))
                     {
                         cmd2.Parameters.AddWithValue("@rm", targetRm);
@@ -92,25 +91,21 @@ namespace INTERFACE_POSTRATA
                     {
                         try
                         {
-                            // alterar cargo do atual RH para MEDICO
                             using (var u1 = new MySqlCommand("UPDATE funcionario SET cargo = @cargo WHERE rm = @rm", conn, tran))
                             {
                                 u1.Parameters.AddWithValue("@cargo", "MEDICO");
                                 u1.Parameters.AddWithValue("@rm", currentRm);
                                 u1.ExecuteNonQuery();
                             }
-
-                            // definir target como RH
                             using (var u2 = new MySqlCommand("UPDATE funcionario SET cargo = @cargo WHERE rm = @rm", conn, tran))
                             {
                                 u2.Parameters.AddWithValue("@cargo", "RH");
                                 u2.Parameters.AddWithValue("@rm", targetRm);
                                 u2.ExecuteNonQuery();
                             }
-
                             tran.Commit();
                             MessageBox.Show("RH principal alterado com sucesso.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
-                            this.Close();
+                            Cancelar_Click(null, null);
                         }
                         catch (Exception ex)
                         {

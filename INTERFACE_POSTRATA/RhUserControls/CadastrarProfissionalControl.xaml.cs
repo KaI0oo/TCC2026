@@ -3,11 +3,11 @@ using System.Windows;
 using System.Windows.Controls;
 using MySql.Data.MySqlClient;
 
-namespace INTERFACE_POSTRATA
+namespace INTERFACE_POSTRATA.RhUserControls
 {
-    public partial class CadastroProfissional : Window
+    public partial class CadastrarProfissionalControl : UserControl
     {
-        public CadastroProfissional()
+        public CadastrarProfissionalControl()
         {
             InitializeComponent();
             AtualizarVisibilidadeCRM();
@@ -23,8 +23,7 @@ namespace INTERFACE_POSTRATA
             string cargo = ((ComboBoxItem)cbCargo.SelectedItem)?.Content?.ToString();
             bool mostrar = string.Equals(cargo, "MEDICO", StringComparison.OrdinalIgnoreCase);
 
-            lblCRM.Visibility = mostrar ? Visibility.Visible : Visibility.Collapsed;
-            txtCRM.Visibility = mostrar ? Visibility.Visible : Visibility.Collapsed;
+            spCRM.Visibility = mostrar ? Visibility.Visible : Visibility.Collapsed;
 
             if (!mostrar) txtCRM.Clear();
         }
@@ -43,12 +42,14 @@ namespace INTERFACE_POSTRATA
 
                 if (string.IsNullOrEmpty(rm) || string.IsNullOrEmpty(nome) || string.IsNullOrEmpty(senha) || string.IsNullOrEmpty(cargo))
                 {
+                    lblStatus.Foreground = System.Windows.Media.Brushes.Red;
                     lblStatus.Text = "Todos os campos são obrigatórios.";
                     return;
                 }
 
                 if (string.Equals(cargo, "MEDICO", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(crm))
                 {
+                    lblStatus.Foreground = System.Windows.Media.Brushes.Red;
                     lblStatus.Text = "CRM é obrigatório para médicos.";
                     return;
                 }
@@ -67,18 +68,32 @@ namespace INTERFACE_POSTRATA
                     }
                 }
 
+                lblStatus.Foreground = System.Windows.Media.Brushes.Green;
+                lblStatus.Text = "Profissional cadastrado com sucesso.";
+                LimparCampos();
                 MessageBox.Show("Profissional cadastrado com sucesso.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
-                this.Close();
             }
             catch (Exception ex)
             {
+                lblStatus.Foreground = System.Windows.Media.Brushes.Red;
                 lblStatus.Text = "Erro: " + ex.Message;
             }
         }
 
-        private void Cancelar_Click(object sender, RoutedEventArgs e)
+        private void Limpar_Click(object sender, RoutedEventArgs e)
         {
-            this.Close();
+            LimparCampos();
+        }
+
+        private void LimparCampos()
+        {
+            txtRM.Clear();
+            txtNome.Clear();
+            txtCRM.Clear();
+            txtSenha.Clear();
+            cbCargo.SelectedIndex = -1;
+            lblStatus.Text = string.Empty;
+            AtualizarVisibilidadeCRM();
         }
     }
 }

@@ -10,16 +10,13 @@
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
         SizeToContent="Manual">
-    <Grid Background="#F4FDFD">
+    <Grid Background="{DynamicResource PoBackground}">
 
         <Viewbox Stretch="Uniform">
 
             <Border MaxWidth="500"
                 MinWidth="350"
-                Background="White"
-                BorderBrush="#00BCD4"
-                BorderThickness="2"
-                CornerRadius="10"
+                Style="{StaticResource PoPanel}"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Margin="20">
@@ -52,19 +49,13 @@
                              Margin="0,5,0,25"/>
 
                 <Button Content="Entrar"
-                        Height="40"
-                        FontWeight="Bold"
-                        Background="#00BCD4"
-                        Foreground="White"
+                        Style="{StaticResource PoButtonPrimary}"
                         Click="Button_Click"
                         Margin="0,0,0,10"/>
                 <TextBlock x:Name="lblLoginError" Foreground="Red" FontSize="14" Margin="0,6,0,6" Visibility="Collapsed" TextWrapping="Wrap"/>
 
                 <Button Content="Sair"
-                        Height="40"
-                        FontWeight="Bold"
-                        Background="#E53935"
-                        Foreground="White"
+                        Style="{StaticResource PoButtonDanger}"
                         Click="Sair_Click"/>
 
             </StackPanel>

@@ -34,11 +34,11 @@ namespace INTERFACE_POSTRATA
                     return;
                 }
 
-                // Autenticação real contra tabela medico
+                // Autenticação real contra tabela funcionario
                 using (var conn = INTERFACE_POSTRATA.Banco.Conexao.ObterConexao())
                 {
                 // incluir crm para propagar na sessão
-                string sql = @"SELECT rm, nome, cargo, crm FROM medico WHERE rm = @rm AND senha = @senha";
+                string sql = @"SELECT rm, nome, cargo, crm FROM funcionario WHERE rm = @rm AND senha = @senha";
                     using (var cmd = new MySql.Data.MySqlClient.MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@rm", usuario);
@@ -54,13 +54,13 @@ namespace INTERFACE_POSTRATA
 
                             string nome = reader["nome"]?.ToString() ?? string.Empty;
                             string cargo = reader["cargo"]?.ToString() ?? string.Empty;
-                            string crm = reader["crm"]?.ToString() ?? string.Empty;
+                            string crm = reader["crm"] != DBNull.Value ? (reader["crm"]?.ToString() ?? string.Empty) : string.Empty;
 
                             // Criar sessão com informações básicas (nome, crm e cargo)
-                            INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoId = int.TryParse(reader["rm"]?.ToString(), out int rmVal) ? rmVal : 0;
-                            INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoName = nome;
-                            INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoCrm = crm;
-                            INTERFACE_POSTRATA.Helpers.Session.CurrentMedicoCargo = cargo;
+                            INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioId = int.TryParse(reader["rm"]?.ToString(), out int rmVal) ? rmVal : 0;
+                            INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioName = nome;
+                            INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioCrm = crm;
+                            INTERFACE_POSTRATA.Helpers.Session.CurrentFuncionarioCargo = cargo;
 
                             // Abrir telas conforme cargo
                             if (cargo.Equals("RH", System.StringComparison.OrdinalIgnoreCase))
@@ -74,7 +74,8 @@ namespace INTERFACE_POSTRATA
                                 var tela = new Window1();
                                 tela.Show();
                             }
-                            else if (cargo.Equals("Secretaria", System.StringComparison.OrdinalIgnoreCase))
+                            else if (cargo.Equals("SECRETARIA", System.StringComparison.OrdinalIgnoreCase)
+                                || cargo.Equals("Secretaria", System.StringComparison.OrdinalIgnoreCase))
                             {
                                 var tela = new TelaSecretaria();
                                 tela.Show();

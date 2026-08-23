@@ -50,8 +50,7 @@
                         </DataGrid>
 
                         <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                            <Button Content="Novo Usuário" Width="140" Height="36" Background="#00BCD4" Foreground="White" Click="NovoUsuario_Click" />
-                            <Button Content="Excluir" Width="120" Height="36" Margin="10,0,0,0" Background="#E53935" Foreground="White" Click="ExcluirUsuario_Click" />
+                            <Button x:Name="btnExcluir" Content="Excluir" Width="120" Height="36" Background="#E53935" Foreground="White" Click="ExcluirUsuario_Click" IsEnabled="False" />
                             <Button Content="Fechar" Width="120" Height="36" Margin="10,0,0,0" Click="Fechar_Click" />
                         </StackPanel>
                     </StackPanel>
@@ -62,18 +61,18 @@
                             <TextBlock Text="Detalhes do Usuário" FontSize="20" FontWeight="Bold" Margin="0,0,0,10" />
 
                             <TextBlock Text="RM" />
-                            <TextBox x:Name="txtRM" Height="32" IsEnabled="True" />
+                            <TextBox x:Name="txtRM" Height="32" IsEnabled="False" />
 
                             <TextBlock Text="Nome" Margin="0,8,0,0" />
-                            <TextBox x:Name="txtNome" Height="32" />
+                            <TextBox x:Name="txtNome" Height="32" IsEnabled="False" />
 
                             <TextBlock Text="CRM" Margin="0,8,0,0" />
-                            <TextBox x:Name="txtCRM" Height="32" />
+                            <TextBox x:Name="txtCRM" Height="32" IsEnabled="False" />
 
 
 
                             <TextBlock Text="Cargo" Margin="0,8,0,0" />
-                            <ComboBox x:Name="cbCargo" Height="32">
+                            <ComboBox x:Name="cbCargo" Height="32" IsEnabled="False">
                                 <ComboBoxItem>RH</ComboBoxItem>
                                 <ComboBoxItem>MEDICO</ComboBoxItem>
                                 <ComboBoxItem>SECRETARIA</ComboBoxItem>
@@ -81,7 +80,7 @@
 
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
                                 <Button x:Name="btnAlterarSenha" Content="Alterar Senha" Width="140" Height="36" Background="#607D8B" Foreground="White" Click="AlterarSenha_Click" IsEnabled="False" />
-                                <Button Content="Salvar" Width="120" Height="36" Background="#00838F" Foreground="White" Click="SalvarUsuario_Click" Margin="10,0,0,0" />
+                                <Button x:Name="btnSalvar" Content="Salvar" Width="120" Height="36" Background="#00838F" Foreground="White" Click="SalvarUsuario_Click" Margin="10,0,0,0" IsEnabled="False" />
                                 <Button Content="Cancelar" Width="120" Height="36" Margin="10,0,0,0" Click="CancelarEdicao_Click" />
                             </StackPanel>
 

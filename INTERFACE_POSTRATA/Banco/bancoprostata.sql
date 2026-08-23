@@ -1,25 +1,32 @@
-CREATE DATABASE postrata;
+-- ===========================================================
+-- BANCO DE DADOS: POSTRATA
+-- Script de criação limpa do banco
+-- ===========================================================
+
+CREATE DATABASE IF NOT EXISTS postrata
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
 USE postrata;
-SELECT DATABASE();
-SELECT @@hostname;
 
 -- ===========================================================
 -- TABELA: MEDICO
--- Armazena os profissionais e usuários do sistema
--- (Médico, RH e Secretária).
+-- Armazena usuários do sistema:
+-- RH, Médico e Secretária.
 -- ===========================================================
 
 CREATE TABLE medico (
     rm INT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     crm VARCHAR(20) NOT NULL,
-    senha VARCHAR(100) NOT NULL
+    senha VARCHAR(100) NOT NULL,
+    cargo VARCHAR(20) NOT NULL
 );
 
 -- ===========================================================
 -- TABELA: PACIENTE
--- Armazena os dados cadastrais dos pacientes e o
--- médico responsável pelo acompanhamento.
+-- Armazena os dados cadastrais dos pacientes
+-- e o médico responsável.
 -- ===========================================================
 
 CREATE TABLE paciente (
@@ -36,17 +43,15 @@ CREATE TABLE paciente (
     rm_medico INT NOT NULL,
 
     FOREIGN KEY (rm_medico)
-    REFERENCES medico(rm)
+        REFERENCES medico(rm)
 );
 
 -- ===========================================================
 -- TABELA: ANAMNESE
--- Armazena o histórico clínico e informações médicas
--- fornecidas pelo paciente durante a consulta.
+-- Armazena o histórico clínico do paciente.
 -- ===========================================================
 
 CREATE TABLE anamnese (
-
     id_anamnese INT AUTO_INCREMENT PRIMARY KEY,
 
     cpf_paciente VARCHAR(14) NOT NULL,
@@ -68,17 +73,15 @@ CREATE TABLE anamnese (
     frequencia_bebida VARCHAR(100),
 
     FOREIGN KEY (cpf_paciente)
-    REFERENCES paciente(cpf)
+        REFERENCES paciente(cpf)
 );
 
 -- ===========================================================
 -- TABELA: EXAME
--- Armazena os resultados dos exames laboratoriais
--- utilizados pela Inteligência Artificial.
+-- Armazena os dados dos exames utilizados pela IA.
 -- ===========================================================
 
 CREATE TABLE exame (
-
     id_exame INT AUTO_INCREMENT PRIMARY KEY,
 
     cpf_paciente VARCHAR(14) NOT NULL,
@@ -92,86 +95,81 @@ CREATE TABLE exame (
     caminho_pdf VARCHAR(300),
 
     FOREIGN KEY (cpf_paciente)
-    REFERENCES paciente(cpf)
+        REFERENCES paciente(cpf)
 );
 
 -- ===========================================================
 -- TABELA: LAUDO
--- Armazena o resultado gerado pelo médico e pela IA
--- com base em um exame previamente cadastrado.
+-- Armazena o resultado relacionado a um exame.
+-- As notas clínicas padrão NÃO são armazenadas,
+-- pois são texto fixo da aplicação.
 -- ===========================================================
 
 CREATE TABLE laudo (
-
     id_laudo INT AUTO_INCREMENT PRIMARY KEY,
 
     id_exame INT NOT NULL,
 
     classificacao VARCHAR(50),
     interpretacao TEXT,
-
     data_laudo DATE,
 
     FOREIGN KEY (id_exame)
-    REFERENCES exame(id_exame)
+        REFERENCES exame(id_exame)
 );
 
 -- ===========================================================
--- INSERE O PRIMEIRO USUÁRIO DO SISTEMA
--- Utilizado para realizar o primeiro acesso à aplicação.
+-- USUÁRIO INICIAL
+-- Primeiro usuário com acesso de RH.
 -- ===========================================================
 
-INSERT INTO medico
-(rm, nome, crm, senha)
-VALUES
-(1, 'Administrador', '000000', '123');
+INSERT INTO medico (
+    rm,
+    nome,
+    crm,
+    senha,
+    cargo
+)
+VALUES (
+    1,
+    'Administrador',
+    '000000',
+    '123',
+    'RH'
+);
 
 -- ===========================================================
--- CONSULTAS DE APOIO AO DESENVOLVIMENTO
+-- USUÁRIO MÉDICO PARA TESTES
+-- Pode ser removido na versão final.
 -- ===========================================================
 
--- Exibe todos os usuários cadastrados.
-SELECT * FROM medico;
+INSERT INTO medico (
+    rm,
+    nome,
+    crm,
+    senha,
+    cargo
+)
+VALUES (
+    2,
+    'Dr. João Silva',
+    '123456',
+    '123',
+    'MEDICO'
+);
 
--- Exibe apenas os RM cadastrados.
-SELECT rm FROM medico;
+-- ===========================================================
+-- CONSULTAS ÚTEIS PARA TESTES
+-- ===========================================================
 
--- Exibe todos os pacientes cadastrados.
+SELECT * FROM funcionario;
 SELECT * FROM paciente;
+SELECT * FROM anamnese;
+SELECT * FROM exame;
+SELECT * FROM laudo;
 
--- Exibe a estrutura da tabela MEDICO.
-DESCRIBE medico;
-
--- Exibe a estrutura da tabela PACIENTE.
+DESCRIBE funcionario;
 DESCRIBE paciente;
-
--- ===========================================================
--- COMANDOS UTILIZADOS DURANTE O DESENVOLVIMENTO
--- ===========================================================
-
--- Remove todos os registros da tabela MEDICO.
-DELETE FROM medico;
-
--- Remove a coluna id_medico da tabela PACIENTE
--- (utilizado apenas durante a modelagem do banco).
-ALTER TABLE paciente
-DROP COLUMN id_medico;
-
--- ===========================================================
--- ALTERAÇÕES REALIZADAS APÓS A CRIAÇÃO DO BANCO
--- ===========================================================
-
--- Adiciona a coluna responsável por identificar o
--- perfil de acesso do usuário (RH, MÉDICO ou SECRETARIA).
-ALTER TABLE medico
-ADD cargo VARCHAR(20) NOT NULL;
-
--- Define o primeiro usuário como RH para permitir
--- o cadastro de novos usuários no sistema.
-UPDATE medico
-SET cargo = 'RH'
-WHERE rm = 1;
-
-INSERT INTO medico (rm, nome, crm, senha, cargo)
-VALUES
-(2, 'Dr. João Silva', '123456', '123', 'MEDICO');
+DESCRIBE anamnese;
+DESCRIBE exame;
+DESCRIBE laudo;
