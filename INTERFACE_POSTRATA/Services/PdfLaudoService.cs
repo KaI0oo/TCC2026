@@ -124,7 +124,7 @@ namespace INTERFACE_POSTRATA.Services
                 col.Item().Element(c => TituloSecao(c, "Dados do Paciente"));
                 col.Item().Element(c => CaixaInfo(c, new (string Label, string Value)[]
                 {
-                    ("Nome", TextoOuTraco(d.Paciente)),
+                    ("Nome", ParaTitleCase(d.Paciente)),
                     ("CPF", TextoOuTraco(d.Cpf)),
                     ("Data de nasc.", TextoOuTraco(d.DataNascimento)),
                     ("Idade", TextoOuTraco(d.Idade))
@@ -218,9 +218,9 @@ namespace INTERFACE_POSTRATA.Services
 
         private static void CaixaResultados(IContainer container, LaudoPdfData d)
         {
-            container.Border(1).BorderColor(CinzaClaro).Padding(8).Column(col =>
+            container.Border(1).BorderColor(CinzaClaro).Padding(14).Column(col =>
             {
-                col.Spacing(4);
+                col.Spacing(18);
 
                 LinhaResultado(col, "PSA Total", TextoOuTraco(d.PsaTotal), "ng/mL");
                 col.Item().LineHorizontal(0.5f).LineColor(CinzaClaro);
@@ -234,7 +234,7 @@ namespace INTERFACE_POSTRATA.Services
 
         private static void LinhaResultado(ColumnDescriptor col, string label, string valor, string unidade)
         {
-            col.Item().Row(row =>
+            col.Item().PaddingVertical(8).Row(row =>
             {
                 row.RelativeItem().Column(c =>
                 {
@@ -301,6 +301,49 @@ namespace INTERFACE_POSTRATA.Services
         private static string TextoOuTraco(string? valor)
         {
             return string.IsNullOrWhiteSpace(valor) ? "—" : valor.Trim();
+        }
+
+        /// <summary>
+        /// Converte o nome para apresentação em Title Case (ex.: KAIO → Kaio,
+        /// JOÃO DA SILVA → João Da Silva). Não altera o valor original armazenado,
+        /// apenas a apresentação exibida no PDF.
+        /// </summary>
+        private static string ParaTitleCase(string? valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor)) return "—";
+
+            string texto = valor.Trim();
+
+            // Mantém a capitalização original para letras com acentuação
+            // compostas (ex.: Ç) usando ToLower/ToUpper por caractere.
+            string lowered = texto.ToLower(CultureInfo.GetCultureInfo("pt-BR"));
+
+            var sb = new System.Text.StringBuilder(lowered.Length);
+            bool inicioDePalavra = true;
+            for (int i = 0; i < lowered.Length; i++)
+            {
+                char ch = lowered[i];
+                if (char.IsLetter(ch))
+                {
+                    if (inicioDePalavra)
+                    {
+                        sb.Append(char.ToUpper(ch, CultureInfo.GetCultureInfo("pt-BR")));
+                        inicioDePalavra = false;
+                    }
+                    else
+                    {
+                        sb.Append(ch);
+                    }
+                }
+                else
+                {
+                    sb.Append(ch);
+                    if (!char.IsWhiteSpace(ch)) continue;
+                    inicioDePalavra = true;
+                }
+            }
+
+            return sb.ToString();
         }
     }
 }
