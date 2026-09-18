@@ -26,32 +26,28 @@ namespace INTERFACE_POSTRATA.Validators
                 return res;
             }
 
-            // Validar números
-            if (!TryParseDouble(psaTotalRaw, out double psaTotal))
+            // Validar PSA Total (Obrigatório, > 0)
+            if (!TryParseDouble(psaTotalRaw, out double psaTotal) || psaTotal <= 0)
             {
-                res.Message = "PSA Total inválido.";
+                res.Message = "PSA Total é obrigatório e deve ser maior que zero.";
                 return res;
             }
-            if (!TryParseDouble(psaLivreRaw, out double psaLivre))
+
+            // Validar PSA Livre (Obrigatório, >= 0)
+            if (!TryParseDouble(psaLivreRaw, out double psaLivre) || psaLivre < 0)
             {
-                res.Message = "PSA Livre inválido.";
+                res.Message = "PSA Livre é obrigatório e não pode ser negativo.";
                 return res;
             }
+
             double densidade = 0;
             if (!string.IsNullOrWhiteSpace(densidadeRaw))
             {
-                if (!TryParseDouble(densidadeRaw, out densidade))
+                if (!TryParseDouble(densidadeRaw, out densidade) || densidade < 0)
                 {
-                    res.Message = "Densidade PSA inválida.";
+                    res.Message = "Densidade PSA inválida. Deve ser um número não negativo.";
                     return res;
                 }
-            }
-
-            // Valores não negativos
-            if (psaTotal < 0 || psaLivre < 0 || ( !string.IsNullOrWhiteSpace(densidadeRaw) && densidade < 0))
-            {
-                res.Message = "Valores de PSA não podem ser negativos.";
-                return res;
             }
 
             // Validar existência do PDF se informado

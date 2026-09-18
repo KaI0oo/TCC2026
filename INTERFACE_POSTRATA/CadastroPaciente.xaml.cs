@@ -239,24 +239,33 @@ namespace INTERFACE_POSTRATA
                                 ((ComboBoxItem)cbSexo.SelectedItem)?.Content?.ToString() ?? string.Empty
                             );
 
-                            // data de nascimento: tentar parse do campo txtNascimento (DD/MM/AA)
+                            // data de nascimento: usar parsing explícito e seguro DD/MM/YYYY
                             object dataParam = System.DBNull.Value;
                             try
                             {
-                                string digits = new string((txtNascimento.Text ?? string.Empty).Where(char.IsDigit).ToArray());
-                                if (digits.Length >= 6)
+                                string dateText = txtNascimento.Text?.Trim() ?? string.Empty;
+                                if (DateTime.TryParseExact(dateText, "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime nascimento))
                                 {
-                                    string dd = digits.Substring(0, 2);
-                                    string mm = digits.Substring(2, 2);
-                                    string aa = digits.Substring(4, 2);
-                                    if (int.TryParse(dd, out int day) && int.TryParse(mm, out int month) && int.TryParse(aa, out int year2))
+                                    if (nascimento > DateTime.Today)
                                     {
-                                        int yearFull = year2 + (year2 <= DateTime.Now.Year % 100 ? 2000 : 1900);
-                                        dataParam = new DateTime(yearFull, month, day);
+                                        throw new Exception("A data de nascimento não pode estar no futuro.");
                                     }
+                                    if (nascimento < DateTime.Today.AddYears(-120))
+                                    {
+                                        throw new Exception("A idade não pode ser superior a 120 anos.");
+                                    }
+                                    dataParam = nascimento;
+                                }
+                                else
+                                {
+                                    throw new Exception("Data de nascimento inválida. Use o formato DD/MM/AAAA.");
                                 }
                             }
-                            catch { dataParam = System.DBNull.Value; }
+                            catch (Exception ex) {
+                                lblErrorPaciente.Text = ex.Message;
+                                lblErrorPaciente.Visibility = System.Windows.Visibility.Visible;
+                                return; // Aborta o salvamento
+                            }
 
                             cmd.Parameters.AddWithValue("@data", dataParam);
 
@@ -317,24 +326,33 @@ namespace INTERFACE_POSTRATA
                                 ((ComboBoxItem)cbSexo.SelectedItem)?.Content?.ToString() ?? string.Empty
                             );
 
-                            // data de nascimento: tentar parse do campo txtNascimento (DD/MM/AA)
+                            // data de nascimento: usar parsing explícito e seguro DD/MM/YYYY
                             object dataParam = System.DBNull.Value;
                             try
                             {
-                                string digits = new string((txtNascimento.Text ?? string.Empty).Where(char.IsDigit).ToArray());
-                                if (digits.Length >= 6)
+                                string dateText = txtNascimento.Text?.Trim() ?? string.Empty;
+                                if (DateTime.TryParseExact(dateText, "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime nascimento))
                                 {
-                                    string dd = digits.Substring(0, 2);
-                                    string mm = digits.Substring(2, 2);
-                                    string aa = digits.Substring(4, 2);
-                                    if (int.TryParse(dd, out int day) && int.TryParse(mm, out int month) && int.TryParse(aa, out int year2))
+                                    if (nascimento > DateTime.Today)
                                     {
-                                        int yearFull = year2 + (year2 <= DateTime.Now.Year % 100 ? 2000 : 1900);
-                                        dataParam = new DateTime(yearFull, month, day);
+                                        throw new Exception("A data de nascimento não pode estar no futuro.");
                                     }
+                                    if (nascimento < DateTime.Today.AddYears(-120))
+                                    {
+                                        throw new Exception("A idade não pode ser superior a 120 anos.");
+                                    }
+                                    dataParam = nascimento;
+                                }
+                                else
+                                {
+                                    throw new Exception("Data de nascimento inválida. Use o formato DD/MM/AAAA.");
                                 }
                             }
-                            catch { dataParam = System.DBNull.Value; }
+                            catch (Exception ex) {
+                                lblErrorPaciente.Text = ex.Message;
+                                lblErrorPaciente.Visibility = System.Windows.Visibility.Visible;
+                                return; // Aborta o salvamento
+                            }
 
                             cmd.Parameters.AddWithValue("@data", dataParam);
 

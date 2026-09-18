@@ -46,11 +46,29 @@ namespace INTERFACE_POSTRATA
             txtPaciente.Text = string.IsNullOrWhiteSpace(paciente) ? "—" : paciente;
             txtCPF.Text = string.IsNullOrWhiteSpace(cpf) ? "—" : cpf;
             txtDataNascimento.Text = string.IsNullOrWhiteSpace(dataNascimento) ? "—" : dataNascimento;
-            txtIdade.Text = string.IsNullOrWhiteSpace(idade) ? "—" : idade + " anos";
+
+            // CÁLCULO AUTOMÁTICO DA IDADE
+            string idadeFinal = "—";
+            if (!string.IsNullOrWhiteSpace(dataNascimento))
+            {
+                if (DateTime.TryParseExact(dataNascimento, "dd/MM/yyyy", PtBr, System.Globalization.DateTimeStyles.None, out DateTime nasc))
+                {
+                    DateTime today = DateTime.Today;
+                    int age = today.Year - nasc.Year;
+                    if (nasc.Date > today.AddYears(-age)) age--;
+                    idadeFinal = age.ToString();
+                }
+            }
+            else
+            {
+                idadeFinal = string.IsNullOrWhiteSpace(idade) ? "—" : idade;
+            }
+            txtIdade.Text = idadeFinal != "—" ? idadeFinal + " anos" : "—";
 
             txtMedico.Text = string.IsNullOrWhiteSpace(medico) ? "—" : medico;
             txtCRMMedico.Text = string.IsNullOrWhiteSpace(crm) ? "—" : crm;
             txtData.Text = DateTime.Now.ToString("dd/MM/yyyy", PtBr);
+
 
             txtValorPSATotal.Text = FormatarNumero(psaTotal);
             txtValorPSALivre.Text = FormatarNumero(psaLivre);
@@ -80,7 +98,7 @@ namespace INTERFACE_POSTRATA
 
             txtClassificacao.Text = resultadoIA;
             AplicarEstiloClassificacao(resultadoIA);
-            AplicarInterpretacao(resultadoIA);
+            AplicarInterpretacao(resultadoIA, densidade);
 
             txtAssinaturaMedico.Text = medico;
             txtCRM.Text = string.IsNullOrWhiteSpace(crm) ? "" : crm;
@@ -106,18 +124,24 @@ namespace INTERFACE_POSTRATA
             return valor;
         }
 
-        private void AplicarInterpretacao(string resultadoIA)
+        private void AplicarInterpretacao(string resultadoIA, string densidade)
         {
+            string baseText = "";
             if (resultadoIA == "SUSPEITO")
             {
-                txtInterpretacao.Text =
-                    "Os valores informados apresentam características compatíveis com risco elevado para alterações prostáticas, sendo recomendada investigação complementar.";
+                baseText = "Os valores informados apresentam características compatíveis com risco elevado para alterações prostáticas, sendo recomendada investigação complementar.";
             }
             else
             {
-                txtInterpretacao.Text =
-                    "Os valores informados apresentam características compatíveis com acompanhamento clínico e monitoramento periódico.";
+                baseText = "Os valores informados apresentam características compatíveis com acompanhamento clínico e monitoramento periódico.";
             }
+
+            if (string.IsNullOrWhiteSpace(densidade) || densidade == "0" || densidade == "—")
+            {
+                baseText += "\n\nOBSERVAÇÃO: A densidade do PSA não foi informada e deve ser verificada/completada para evitar uma avaliação incompleta.";
+            }
+
+            txtInterpretacao.Text = baseText;
         }
 
         private void AplicarEstiloClassificacao(string resultadoIA)

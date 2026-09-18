@@ -10,18 +10,23 @@ COLLATE utf8mb4_unicode_ci;
 USE postrata;
 
 -- ===========================================================
--- TABELA: MEDICO
+-- TABELA: FUNCIONARIO
 -- Armazena usuários do sistema:
 -- RH, Médico e Secretária.
 -- ===========================================================
 
-CREATE TABLE medico (
+CREATE TABLE funcionario (
     rm INT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
-    crm VARCHAR(20) NOT NULL,
+    crm VARCHAR(20),
     senha VARCHAR(100) NOT NULL,
     cargo VARCHAR(20) NOT NULL
 );
+
+-- Adicionando constraint de unicidade para o CRM.
+-- No MySQL, múltiplos valores NULL são permitidos em colunas UNIQUE,
+-- o que permite que RH/Secretaria fiquem sem CRM enquanto médicos não duplicam.
+CREATE UNIQUE INDEX idx_crm_unique ON funcionario(crm);
 
 -- ===========================================================
 -- TABELA: PACIENTE
@@ -43,7 +48,7 @@ CREATE TABLE paciente (
     rm_medico INT NOT NULL,
 
     FOREIGN KEY (rm_medico)
-        REFERENCES medico(rm)
+        REFERENCES funcionario(rm)
 );
 
 -- ===========================================================
@@ -86,8 +91,8 @@ CREATE TABLE exame (
 
     cpf_paciente VARCHAR(14) NOT NULL,
 
-    psa_total DECIMAL(10,2),
-    psa_livre DECIMAL(10,2),
+    psa_total DECIMAL(10,2) NOT NULL,
+    psa_livre DECIMAL(10,2) NOT NULL,
     densidade_psa DECIMAL(10,2),
 
     data_exame DATE,
@@ -123,7 +128,7 @@ CREATE TABLE laudo (
 -- Primeiro usuário com acesso de RH.
 -- ===========================================================
 
-INSERT INTO medico (
+INSERT INTO funcionario (
     rm,
     nome,
     crm,
@@ -143,7 +148,7 @@ VALUES (
 -- Pode ser removido na versão final.
 -- ===========================================================
 
-INSERT INTO medico (
+INSERT INTO funcionario (
     rm,
     nome,
     crm,

@@ -38,6 +38,10 @@ except ValueError:
     sys.exit(1)
 
 # 4. Processamento das features
+if psa_total == 0:
+    print("ERRO: PSA Total não pode ser zero para o cálculo da relação L/T.")
+    sys.exit(1)
+
 relacao_lt = psa_livre / psa_total
 if relacao_lt > 1:
     relacao_lt /= 100
