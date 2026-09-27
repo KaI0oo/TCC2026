@@ -1,6 +1,8 @@
 using System;
 using System.Data;
 using System.Globalization;
+using System.IO;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using INTERFACE_POSTRATA.Banco;
@@ -34,43 +36,69 @@ namespace INTERFACE_POSTRATA
                 btnTodos.Visibility = Visibility.Collapsed;
         }
 
-        public void CarregarLaudos(string? cpf = null)
+        public void CarregarLaudos(string? termo = null)
         {
             try
             {
                 using MySqlConnection conn = Conexao.ObterConexao();
 
-                if (!string.IsNullOrWhiteSpace(cpf))
-                {
-                    if (!PacienteExiste(conn, cpf))
-                    {
-                        dgLaudos.ItemsSource = null;
-                        txtStatus.Text = $"Nenhum paciente encontrado com o CPF {cpf.Trim()}.";
-                        return;
-                    }
-                }
-
                 string sql = @"SELECT l.id_laudo, l.id_exame, l.classificacao, l.interpretacao, l.data_laudo,
-                                      e.cpf_paciente, e.psa_total, e.psa_livre, e.densidade_psa, e.data_exame,
+                                      e.cpf_paciente, e.psa_total, e.psa_livre, e.densidade_psa, e.data_exame, e.caminho_pdf,
                                       p.nome AS paciente_nome, p.idade, p.data_nascimento
                                FROM laudo l
                                INNER JOIN exame e ON e.id_exame = l.id_exame
                                INNER JOIN paciente p ON p.cpf = e.cpf_paciente";
 
-                if (!string.IsNullOrWhiteSpace(cpf))
-                    sql += " WHERE e.cpf_paciente = @cpf";
+                if (!string.IsNullOrWhiteSpace(termo))
+                {
+                    bool isNumeric = int.TryParse(termo.Trim(), out _);
+                    if (isNumeric)
+                    {
+                        sql += " WHERE (e.cpf_paciente = @termo OR p.nome LIKE @likeTermo OR l.id_laudo = @termoInt OR l.id_exame = @termoInt)";
+                    }
+                    else
+                    {
+                        sql += " WHERE (e.cpf_paciente = @termo OR p.nome LIKE @likeTermo)";
+                    }
+                }
 
                 sql += " ORDER BY l.data_laudo DESC, l.id_laudo DESC";
 
                 using MySqlCommand cmd = new MySqlCommand(sql, conn);
-                if (!string.IsNullOrWhiteSpace(cpf))
-                    cmd.Parameters.AddWithValue("@cpf", cpf.Trim());
+                if (!string.IsNullOrWhiteSpace(termo))
+                {
+                    string trimmed = termo.Trim();
+                    cmd.Parameters.AddWithValue("@termo", trimmed);
+                    cmd.Parameters.AddWithValue("@likeTermo", $"%{trimmed}%");
+
+                    if (int.TryParse(trimmed, out int termoInt))
+                    {
+                        cmd.Parameters.AddWithValue("@termoInt", termoInt);
+                    }
+                }
 
                 using MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                 DataTable dt = new DataTable();
                 adapter.Fill(dt);
+
+                // Adicionar coluna calculada para o status do PDF
+                if (dt.Columns.Contains("caminho_pdf"))
+                {
+                    DataColumn statusCol = new DataColumn("status_pdf", typeof(string));
+                    dt.Columns.Add(statusCol);
+
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        string path = row["caminho_pdf"]?.ToString();
+                        if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                            row["status_pdf"] = "✅ Existe";
+                        else
+                            row["status_pdf"] = "❌ Não Encontrado";
+                    }
+                }
+
                 dgLaudos.ItemsSource = dt.DefaultView;
-                AtualizarStatus(dt.Rows.Count, cpf);
+                AtualizarStatus(dt.Rows.Count, termo);
             }
             catch (Exception ex)
             {
@@ -104,20 +132,52 @@ namespace INTERFACE_POSTRATA
 
         private void BtnPesquisar_Click(object sender, RoutedEventArgs e)
         {
-            string cpf = txtPesquisa.Text.Trim();
-            if (string.IsNullOrWhiteSpace(cpf))
+            string termo = txtPesquisa.Text.Trim();
+            if (string.IsNullOrWhiteSpace(termo))
             {
-                MessageBox.Show("Informe o CPF do paciente para pesquisar.", "Atenção", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Informe o CPF, Nome ou ID do paciente para pesquisar.", "Atenção", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            CarregarLaudos(cpf);
+            CarregarLaudos(termo);
         }
 
         private void BtnTodos_Click(object sender, RoutedEventArgs e)
         {
             txtPesquisa.Text = string.Empty;
             CarregarLaudos();
+        }
+
+        private void BtnAbrirPdf_Click(object sender, RoutedEventArgs e)
+        {
+            if (dgLaudos.SelectedItem is not DataRowView row)
+            {
+                MessageBox.Show("Selecione um laudo na lista para abrir o PDF.", "Atenção", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string path = row["caminho_pdf"]?.ToString();
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                MessageBox.Show("Este laudo não possui um PDF gerado.", "Atenção", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (File.Exists(path))
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Erro ao abrir o PDF: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            else
+            {
+                MessageBox.Show("O arquivo PDF não foi encontrado no disco.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void BtnVisualizar_Click(object sender, RoutedEventArgs e)
@@ -142,9 +202,10 @@ namespace INTERFACE_POSTRATA
             try
             {
                 using MySqlConnection conn = Conexao.ObterConexao();
-                string sql = @"SELECT l.id_laudo, l.classificacao, l.interpretacao, l.data_laudo,
+                string sql = @"SELECT l.id_laudo, l.id_exame, l.classificacao, l.interpretacao, l.data_laudo,
                                       e.psa_total, e.psa_livre, e.densidade_psa, e.data_exame, e.cpf_paciente,
                                       p.nome AS paciente_nome, p.idade, p.data_nascimento,
+                                      e.id_exame AS id_exame_val,
                                       m.nome AS medico_nome, m.crm AS medico_crm
                                FROM laudo l
                                INNER JOIN exame e ON e.id_exame = l.id_exame
@@ -162,6 +223,7 @@ namespace INTERFACE_POSTRATA
                     return;
                 }
 
+                int idExame = Convert.ToInt32(reader["id_exame_val"]);
                 string paciente = reader["paciente_nome"]?.ToString() ?? "—";
                 string cpf = reader["cpf_paciente"]?.ToString() ?? "";
                 string idade = reader["idade"]?.ToString() ?? "";
@@ -185,7 +247,9 @@ namespace INTERFACE_POSTRATA
                     classificacao,
                     cpf,
                     dataNascimento,
-                    dataExame);
+                    dataExame,
+                    idLaudo,
+                    idExame);
                 tela.Show();
             }
             catch (Exception ex)

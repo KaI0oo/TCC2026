@@ -1,10 +1,30 @@
-# Ignorar as pastas de compilação do .NET em qualquer nível do projeto
+# .NET / Visual Studio
 bin/
 obj/
-
-# Ignorar arquivos de configuração pessoal do Visual Studio / VS Code
 .vs/
 *.user
 *.suo
+*.useroscache
+*.sln.docstates
+
+# Python
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+build/
+dist/
+
+# Local Storage
+Storage/PDFs/
+logs/
+*.log
+
+# Others
 *.ipynb
 *.png
+.idea/
+.vscode/

@@ -595,8 +595,8 @@ namespace INTERFACE_POSTRATA
                     cpf,
                     dataNascimento,
                     dataExame,
-                    idLaudoInserido
-                );
+                    idLaudoInserido,
+                    idExameInserido);
                 tela.Show();
                 INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
                 this.Close();

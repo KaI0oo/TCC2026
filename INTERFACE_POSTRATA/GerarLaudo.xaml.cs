@@ -24,6 +24,7 @@ namespace INTERFACE_POSTRATA
             "• Elevações transitórias do PSA podem ocorrer mesmo na ausência de neoplasia.";
 
         private readonly int? _idLaudo;
+        private readonly int? _idExame;
 
         public GerarLaudo(
             string paciente,
@@ -37,11 +38,13 @@ namespace INTERFACE_POSTRATA
             string cpf = "",
             string dataNascimento = "",
             string dataExame = "",
-            int? idLaudo = null)
+            int? idLaudo = null,
+            int? idExame = null)
         {
             InitializeComponent();
 
             _idLaudo = idLaudo;
+            _idExame = idExame;
 
             txtPaciente.Text = string.IsNullOrWhiteSpace(paciente) ? "—" : paciente;
             txtCPF.Text = string.IsNullOrWhiteSpace(cpf) ? "—" : cpf;
@@ -168,16 +171,16 @@ namespace INTERFACE_POSTRATA
         {
             try
             {
-                var sfd = new Microsoft.Win32.SaveFileDialog
+                // Caminho automático: Storage/PDFs/
+                string pdfFolder = Path.Combine(AppContext.BaseDirectory, "Storage", "PDFs");
+                if (!Directory.Exists(pdfFolder))
                 {
-                    Filter = "PDF Document (*.pdf)|*.pdf",
-                    FileName = $"Laudo_{SanitizeFileName(txtPaciente.Text)}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf"
-                };
+                    Directory.CreateDirectory(pdfFolder);
+                }
 
-                bool? ok = sfd.ShowDialog(this);
-                if (ok != true) return;
-
-                string targetPath = sfd.FileName;
+                // Nome: laudo_{idLaudo}_{timestamp}.pdf
+                string fileName = $"laudo_{(_idLaudo ?? 0)}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                string targetPath = Path.Combine(pdfFolder, fileName);
 
                 var dados = new LaudoPdfData
                 {
@@ -200,13 +203,31 @@ namespace INTERFACE_POSTRATA
                     Notas = NotasFixas
                 };
 
-                // Geração DIRETA de PDF (QuestPDF). Sem XPS, sem impressora, sem Window.
+                // Geração DIRETA de PDF (QuestPDF)
                 PdfLaudoService.Gerar(dados, targetPath);
 
                 if (File.Exists(targetPath))
                 {
+                    // Persistência no Banco: Update exame SET caminho_pdf = @path WHERE id_exame = @id
+                    if (_idExame.HasValue)
+                    {
+                        try
+                        {
+                            using MySqlConnection conn = Conexao.ObterConexao();
+                            string sql = "UPDATE exame SET caminho_pdf = @path WHERE id_exame = @id";
+                            using MySqlCommand cmd = new MySqlCommand(sql, conn);
+                            cmd.Parameters.AddWithValue("@path", targetPath);
+                            cmd.Parameters.AddWithValue("@id", _idExame.Value);
+                            cmd.ExecuteNonQuery();
+                        }
+                        catch (Exception dbEx)
+                        {
+                            MessageBox.Show($"PDF gerado, mas erro ao atualizar banco: {dbEx.Message}", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
+                    }
+
                     MessageBox.Show(
-                        $"PDF gerado com sucesso em:\n{targetPath}",
+                        $"PDF gerado e salvo automaticamente em:\n{targetPath}",
                         "Sucesso",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
