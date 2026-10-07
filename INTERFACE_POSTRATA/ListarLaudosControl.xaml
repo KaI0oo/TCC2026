@@ -16,9 +16,10 @@
 
         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
             <TextBox x:Name="txtPesquisa" Width="300" Height="30" />
-            <Button x:Name="btnPesquisar" Content="Pesquisar (CPF)" Width="140" Height="30" Margin="10,0,0,0" Click="BtnPesquisar_Click" />
+            <Button x:Name="btnPesquisar" Content="Pesquisar" Width="140" Height="30" Margin="10,0,0,0" Click="BtnPesquisar_Click" />
             <Button x:Name="btnTodos" Content="Mostrar Todos" Width="120" Height="30" Margin="10,0,0,0" Click="BtnTodos_Click" />
-            <Button x:Name="btnVisualizar" Content="Visualizar Laudo" Width="150" Height="30" Margin="10,0,0,0" Click="BtnVisualizar_Click" Visibility="Collapsed" />
+            <Button x:Name="btnAbrirPdf" Content="Abrir PDF" Width="120" Height="30" Margin="10,0,0,0" Click="BtnAbrirPdf_Click" />
+            <Button x:Name="btnVisualizar" Content="Visualizar Laudo" Width="150" Height="30" Margin="10,0,0,0" Click="BtnVisualizar_Click" />
             <Button x:Name="btnVoltar" Content="Fechar" Width="100" Height="30" Margin="10,0,0,0" Click="BtnVoltar_Click" />
         </StackPanel>
 
@@ -44,6 +45,7 @@
                 <DataGridTextColumn Header="Classificação" Binding="{Binding classificacao}" Width="150" />
                 <DataGridTextColumn Header="Interpretação" Binding="{Binding interpretacao}" Width="*" />
                 <DataGridTextColumn Header="Data" Binding="{Binding data_laudo}" Width="120" />
+                <DataGridTextColumn Header="PDF" Binding="{Binding status_pdf}" Width="120" />
             </DataGrid.Columns>
         </DataGrid>
     </Grid>
