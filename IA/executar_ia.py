@@ -1,47 +1,25 @@
 import sys
 import pandas as pd
-from pathlib import Path
-import IA_generator as ia 
+import sys
+import os
+from IA_generator import gerar_modelo, gerar_metricas_avaliacao
 
-# 1. Gerenciamento de Caminhos Relativos Seguros
-pasta_atual = Path(__file__).resolve().parent if '__file__' in globals() else Path.cwd()
-caminho_modelo = pasta_atual / "IA.joblib"
-caminho_dados = pasta_atual / "dados_psa_clinica.csv" 
+if not os.path.exists("C:\\TCC2026\\TCC2026_Prostata\\IA\\IA.pkl"):
+    gerar_modelo()
 
-# 2. Verifica se o modelo já existe
-if not caminho_modelo.exists():
-    try:
-        X, y = ia.carregar_dados(caminho_dados)
-        modelo_novo, _, _ = ia.treinar_modelo_prostata(X, y)
-        ia.salvar_modelo(modelo_novo, caminho_modelo)
-    except FileNotFoundError:
-        print("ERRO: Modelo não encontrado e arquivo de dados (CSV) ausente para treino.")
-        sys.exit(1)
+pasta_atual = os.path.dirname(os.path.abspath(__file__))
 
-# 3. Carrega o modelo
-modelo = ia.carregar_modelo_salvo(caminho_modelo)
+caminho_modelo = os.path.join(pasta_atual, "IA.pkl")
 
-# ==========================================
-# 3.5 Validação Segura dos Argumentos
-# ==========================================
-if len(sys.argv) < 5:
-    print("ERRO: Argumentos insuficientes. Esperado: Idade, PSA_Total, PSA_Livre, Densidade")
-    sys.exit(1)
+with open(caminho_modelo, "rb") as arquivo:
+    modelo = pickle.load(arquivo)
 
-try:
-    idade = float(sys.argv[1])
-    psa_total = float(sys.argv[2])
-    psa_livre = float(sys.argv[3])
-    densidade = float(sys.argv[4])
-except ValueError:
-    print("ERRO: Os argumentos devem ser numericos. Formato invalido recebido do backend.")
-    sys.exit(1)
+idade = float(sys.argv[1])
+psa_total = float(sys.argv[2])
+psa_livre = float(sys.argv[3])
+densidade = float(sys.argv[4])
 
 # 4. Processamento das features
-if psa_total == 0:
-    print("ERRO: PSA Total não pode ser zero para o cálculo da relação L/T.")
-    sys.exit(1)
-
 relacao_lt = psa_livre / psa_total
 if relacao_lt > 1:
     relacao_lt /= 100
@@ -64,3 +42,4 @@ if resultado == 1:
     print("SUSPEITO")
 else:
     print("BENIGNO")
+# gerar_metricas_avaliacao()

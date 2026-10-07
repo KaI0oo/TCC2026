@@ -447,7 +447,8 @@ namespace INTERFACE_POSTRATA
                 string pythonExe = EncontrarPython();
                 if (string.IsNullOrEmpty(pythonExe))
                 {
-                    Services.DialogService.Error("Python não foi encontrado no sistema. Certifique-se de tê-lo instalado.");
+                    Services.DialogService.Error(
+                        "Executável da IA não encontrado. Recompile o aplicativo após gerar IA\\dist\\executar_ia.exe com o script IA\\build.ps1.");
                     return;
                 }
 
@@ -480,7 +481,7 @@ namespace INTERFACE_POSTRATA
                     return;
                 }
 
-                if (!string.IsNullOrEmpty(saida))
+                if (string.IsNullOrEmpty(saida))
                 {
                     resultadoIA = saida.ToUpper().Trim();
                     if (resultadoIA != "SUSPEITO" && resultadoIA != "BENIGNO")
@@ -683,3 +684,4 @@ namespace INTERFACE_POSTRATA
         }
     }
 }
+

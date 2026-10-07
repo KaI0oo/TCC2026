@@ -120,4 +120,9 @@ def carregar_modelo_salvo(caminho_modelo):
     """
     Carrega o arquivo do modelo serializado e o retorna pronto para uso.
     """
+<<<<<<< HEAD
     return joblib.load(caminho_modelo)
+=======
+    return joblib.load(caminho_modelo)
+
+>>>>>>> origin/main

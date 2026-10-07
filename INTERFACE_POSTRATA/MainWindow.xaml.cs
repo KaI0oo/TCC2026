@@ -38,10 +38,14 @@ namespace INTERFACE_POSTRATA
                 using (var conn = INTERFACE_POSTRATA.Banco.Conexao.ObterConexao())
                 {
                 // incluir crm para propagar na sessão
+<<<<<<< HEAD
                 string sql = @"SELECT rm, nome, cargo, crm FROM funcionario WHERE rm = @rm AND senha = @senha";
+=======
+                string sql = @"SELECT rm, nome, cargo, crm FROM medico WHERE nome = @nome AND senha = @senha";
+>>>>>>> origin/main
                     using (var cmd = new MySql.Data.MySqlClient.MySqlCommand(sql, conn))
                     {
-                        cmd.Parameters.AddWithValue("@rm", usuario);
+                        cmd.Parameters.AddWithValue("@nome", usuario);
                         cmd.Parameters.AddWithValue("@senha", senha);
                         using (var reader = cmd.ExecuteReader())
                         {
