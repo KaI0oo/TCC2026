@@ -44,7 +44,7 @@
       Margin="10">
 
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="5*"/>
                 <ColumnDefinition Width="7*"/>
             </Grid.ColumnDefinitions>
 
@@ -60,6 +60,14 @@
                     <TreeView x:Name="tvMenu" BorderThickness="0"
                       Background="White"
                       FontSize="26">
+
+                        <TreeView.Resources>
+                            <Style TargetType="TreeViewItem">
+                                <Setter Property="Padding" Value="6,7,6,7"/>
+                                <Setter Property="MinHeight" Value="40"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            </Style>
+                        </TreeView.Resources>
 
                         <!-- Início -->
                         <TreeViewItem x:Name="tvInicioGroup" IsExpanded="True">
@@ -153,7 +161,7 @@
             BorderThickness="2">
 
                 <!-- Conteúdo principal substituível -->
-                <ContentControl x:Name="MainContent">
+                <ContentControl x:Name="MainContent" Margin="0">
                     <Grid>
                         <Label Content="Painel Principal"
                        FontSize="32"
