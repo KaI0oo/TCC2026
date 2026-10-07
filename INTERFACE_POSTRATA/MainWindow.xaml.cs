@@ -29,25 +29,23 @@ namespace INTERFACE_POSTRATA
 
                 if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(senha))
                 {
-                    lblLoginError.Text = "RM e senha são obrigatórios.";
+                    lblLoginError.Text = "Usuário e senha são obrigatórios.";
                     lblLoginError.Visibility = System.Windows.Visibility.Visible;
                     return;
                 }
 
-                // Autenticação real contra tabela funcionario (login por RM)
                 using (var conn = INTERFACE_POSTRATA.Banco.Conexao.ObterConexao())
                 {
-                    // incluir crm para propagar na sessão
-                    string sql = @"SELECT rm, nome, cargo, crm FROM funcionario WHERE rm = @rm AND senha = @senha";
+                    string sql = @"SELECT rm, nome, cargo, crm FROM funcionario WHERE usuario = @usuario AND senha = @senha";
                     using (var cmd = new MySql.Data.MySqlClient.MySqlCommand(sql, conn))
                     {
-                        cmd.Parameters.AddWithValue("@rm", usuario);
+                        cmd.Parameters.AddWithValue("@usuario", usuario);
                         cmd.Parameters.AddWithValue("@senha", senha);
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (!reader.Read())
                             {
-                                lblLoginError.Text = "RM ou senha inválidos.";
+                                lblLoginError.Text = "Usuário ou senha inválidos.";
                                 lblLoginError.Visibility = System.Windows.Visibility.Visible;
                                 return;
                             }

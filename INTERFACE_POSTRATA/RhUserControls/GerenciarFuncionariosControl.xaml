@@ -32,7 +32,7 @@
                 <DataGrid x:Name="dgUsers" AutoGenerateColumns="False" Margin="0,10,0,0"
                           SelectionMode="Single" SelectionChanged="DgUsers_SelectionChanged" Height="320">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="RM"    Binding="{Binding RM}"    Width="80"/>
+                        <DataGridTextColumn Header="Usuário" Binding="{Binding Usuario}" Width="140"/>
                         <DataGridTextColumn Header="Nome"  Binding="{Binding Nome}"  Width="*"/>
                         <DataGridTextColumn Header="CRM"   Binding="{Binding CRM}"   Width="150"/>
                         <DataGridTextColumn Header="Cargo" Binding="{Binding Cargo}" Width="120"/>
@@ -54,8 +54,8 @@
                                Style="{StaticResource PoSectionTitle}"
                                FontSize="20" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="RM" Style="{StaticResource PoFormLabel}"/>
-                    <TextBox x:Name="txtRM" Height="32" IsEnabled="False"/>
+                    <TextBlock Text="Usuário" Style="{StaticResource PoFormLabel}"/>
+                    <TextBox x:Name="txtUsuario" Height="32" IsEnabled="False"/>
 
                     <TextBlock Text="Nome" Style="{StaticResource PoFormLabel}" Margin="0,8,0,0"/>
                     <TextBox x:Name="txtNome" Height="32" IsEnabled="False"/>

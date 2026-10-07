@@ -25,10 +25,10 @@ namespace INTERFACE_POSTRATA.RhUserControls
                 var lista = new List<dynamic>();
                 using (var conn = Banco.Conexao.ObterConexao())
                 {
-                    string sql = "SELECT rm, nome, crm, cargo FROM funcionario";
+                    string sql = "SELECT rm, usuario, nome, crm, cargo FROM funcionario";
                     if (!string.IsNullOrWhiteSpace(filtro))
-                        sql += " WHERE rm LIKE @q OR nome LIKE @q";
-                    sql += " ORDER BY rm";
+                        sql += " WHERE usuario LIKE @q OR nome LIKE @q";
+                    sql += " ORDER BY usuario";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -42,6 +42,7 @@ namespace INTERFACE_POSTRATA.RhUserControls
                                 lista.Add(new
                                 {
                                     RM = reader["rm"] != DBNull.Value ? Convert.ToInt32(reader["rm"]) : 0,
+                                    Usuario = reader["usuario"]?.ToString() ?? string.Empty,
                                     Nome = reader["nome"]?.ToString() ?? string.Empty,
                                     CRM = reader["crm"] != DBNull.Value ? (reader["crm"]?.ToString() ?? string.Empty) : string.Empty,
                                     Cargo = reader["cargo"]?.ToString() ?? string.Empty
@@ -75,6 +76,7 @@ namespace INTERFACE_POSTRATA.RhUserControls
             if (item == null) { ClearDetails(); return; }
 
             var rmProp = item.GetType().GetProperty("RM");
+            var usuarioProp = item.GetType().GetProperty("Usuario");
             var nomeProp = item.GetType().GetProperty("Nome");
             var crmProp = item.GetType().GetProperty("CRM");
             var cargoProp = item.GetType().GetProperty("Cargo");
@@ -82,7 +84,7 @@ namespace INTERFACE_POSTRATA.RhUserControls
 
             int rm = (int)rmProp.GetValue(item);
             _selectedRm = rm;
-            txtRM.Text = rm.ToString();
+            txtUsuario.Text = usuarioProp?.GetValue(item)?.ToString() ?? string.Empty;
             txtNome.Text = nomeProp?.GetValue(item)?.ToString() ?? string.Empty;
             txtCRM.Text = crmProp?.GetValue(item)?.ToString() ?? string.Empty;
             var cargoVal = cargoProp?.GetValue(item)?.ToString() ?? string.Empty;
@@ -121,7 +123,7 @@ namespace INTERFACE_POSTRATA.RhUserControls
 
         private void SetPanelEnabled(bool enabled)
         {
-            txtRM.IsEnabled = false;
+            txtUsuario.IsEnabled = enabled;
             txtNome.IsEnabled = enabled;
             txtCRM.IsEnabled = enabled;
             cbCargo.IsEnabled = enabled;
@@ -134,7 +136,7 @@ namespace INTERFACE_POSTRATA.RhUserControls
         {
             _selectedRm = null;
             dgUsers.SelectedItem = null;
-            txtRM.Text = string.Empty;
+            txtUsuario.Text = string.Empty;
             txtNome.Text = string.Empty;
             txtCRM.Text = string.Empty;
             cbCargo.SelectedIndex = -1;
@@ -146,6 +148,7 @@ namespace INTERFACE_POSTRATA.RhUserControls
         private bool ValidateFields()
         {
             if (!_selectedRm.HasValue) { MessageBox.Show("Selecione um funcionário para salvar.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning); return false; }
+            if (string.IsNullOrWhiteSpace(txtUsuario.Text)) { MessageBox.Show("Usuário é obrigatório.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning); return false; }
             if (string.IsNullOrWhiteSpace(txtNome.Text)) { MessageBox.Show("Nome é obrigatório.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning); return false; }
             if (cbCargo.SelectedItem == null) { MessageBox.Show("Cargo é obrigatório.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning); return false; }
 
@@ -191,9 +194,10 @@ namespace INTERFACE_POSTRATA.RhUserControls
                         }
                     }
 
-                    string sql = "UPDATE funcionario SET nome=@nome, crm=@crm, cargo=@cargo WHERE rm=@rm";
+                    string sql = "UPDATE funcionario SET usuario=@usuario, nome=@nome, crm=@crm, cargo=@cargo WHERE rm=@rm";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
+                        cmd.Parameters.AddWithValue("@usuario", txtUsuario.Text.Trim());
                         cmd.Parameters.AddWithValue("@nome", txtNome.Text.Trim());
                         cmd.Parameters.AddWithValue("@crm", novoCrm);
                         cmd.Parameters.AddWithValue("@cargo", novoCargo);
@@ -263,7 +267,7 @@ namespace INTERFACE_POSTRATA.RhUserControls
             if (!_selectedRm.HasValue) { MessageBox.Show("Selecione um usuário para excluir.", "Atenção", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
 
             int rm = _selectedRm.Value;
-            var result = MessageBox.Show($"Deseja realmente excluir o usuário com RM {rm}?", "Confirmar exclusão", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var result = MessageBox.Show($"Deseja realmente excluir o usuário {txtUsuario.Text}?", "Confirmar exclusão", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result != MessageBoxResult.Yes) return;
 
             try

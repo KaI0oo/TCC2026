@@ -26,14 +26,11 @@ logs/
 # Others
 *.ipynb
 *.png
-<<<<<<< HEAD
 .idea/
 .vscode/
-=======
 
 # Artefatos locais do empacotamento PyInstaller
 IA/build/
 IA/dist/
 IA/__pycache__/
 IA/*.spec
->>>>>>> origin/main

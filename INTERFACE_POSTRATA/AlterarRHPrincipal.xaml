@@ -9,10 +9,10 @@
         <Border Background="White" Margin="30" CornerRadius="8">
             <StackPanel Margin="30">
                 <TextBlock Text="Alterar RH Principal" FontSize="26" FontWeight="Bold" Foreground="#00838F" HorizontalAlignment="Center" />
-                <TextBlock Text="Atenção: somente um RH Principal pode existir. Informe o RM do funcionário que será promovido a RH." Margin="0,10,0,20" TextWrapping="Wrap" />
+                <TextBlock Text="Atenção: somente um RH Principal pode existir. Informe o usuário do funcionário que será promovido a RH." Margin="0,10,0,20" TextWrapping="Wrap" />
 
-                <TextBlock Text="RM do Funcionário a ser promovido" />
-                <TextBox x:Name="txtTargetRM" Height="32" Width="300" />
+                <TextBlock Text="Usuário do funcionário a ser promovido" />
+                <TextBox x:Name="txtTargetUsuario" Height="32" Width="300" />
 
                 <TextBlock Text="Nome (opcional)" Margin="0,8,0,0" />
                 <TextBox x:Name="txtTargetNome" Height="32" Width="500" />

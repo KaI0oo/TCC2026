@@ -1,9 +1,13 @@
 -- ===========================================================
--- BANCO DE DADOS: POSTRATA
--- Script de criação limpa do banco
+-- BANCO DE DADOS: postrata
+-- Recriação limpa (DROP + CREATE)
+-- Login por nome de usuário (coluna usuario).
+-- rm permanece como ID interno (AUTO_INCREMENT / FK).
 -- ===========================================================
 
-CREATE DATABASE IF NOT EXISTS postrata
+
+
+CREATE DATABASE postrata
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;
 
@@ -11,27 +15,21 @@ USE postrata;
 
 -- ===========================================================
 -- TABELA: FUNCIONARIO
--- Armazena usuários do sistema:
--- RH, Médico e Secretária.
 -- ===========================================================
 
 CREATE TABLE funcionario (
-    rm INT PRIMARY KEY,
+    rm INT AUTO_INCREMENT PRIMARY KEY,
+    usuario VARCHAR(50) NOT NULL,
     nome VARCHAR(100) NOT NULL,
     crm VARCHAR(20),
     senha VARCHAR(100) NOT NULL,
-    cargo VARCHAR(20) NOT NULL
+    cargo VARCHAR(20) NOT NULL,
+    UNIQUE KEY uk_funcionario_usuario (usuario),
+    UNIQUE KEY idx_crm_unique (crm)
 );
-
--- Adicionando constraint de unicidade para o CRM.
--- No MySQL, múltiplos valores NULL são permitidos em colunas UNIQUE,
--- o que permite que RH/Secretaria fiquem sem CRM enquanto médicos não duplicam.
-CREATE UNIQUE INDEX idx_crm_unique ON funcionario(crm);
 
 -- ===========================================================
 -- TABELA: PACIENTE
--- Armazena os dados cadastrais dos pacientes
--- e o médico responsável.
 -- ===========================================================
 
 CREATE TABLE paciente (
@@ -53,13 +51,14 @@ CREATE TABLE paciente (
 
 -- ===========================================================
 -- TABELA: ANAMNESE
--- Armazena o histórico clínico do paciente.
+-- Colunas alinhadas ao INSERT da aplicação.
 -- ===========================================================
 
 CREATE TABLE anamnese (
     id_anamnese INT AUTO_INCREMENT PRIMARY KEY,
 
     cpf_paciente VARCHAR(14) NOT NULL,
+    rm_medico INT NULL,
 
     possui_doenca BOOLEAN,
     doencas TEXT,
@@ -67,23 +66,24 @@ CREATE TABLE anamnese (
     observacoes TEXT,
 
     toma_remedio BOOLEAN,
-    remedio VARCHAR(100),
-    dosagem VARCHAR(50),
+    remedio_nome VARCHAR(100),
+    dosagem_mg VARCHAR(50),
 
     inicio_tratamento DATE,
     fim_tratamento DATE,
 
     tabagismo VARCHAR(20),
     alcool VARCHAR(20),
-    frequencia_bebida VARCHAR(100),
+    frequencia VARCHAR(100),
 
     FOREIGN KEY (cpf_paciente)
-        REFERENCES paciente(cpf)
+        REFERENCES paciente(cpf),
+    FOREIGN KEY (rm_medico)
+        REFERENCES funcionario(rm)
 );
 
 -- ===========================================================
 -- TABELA: EXAME
--- Armazena os dados dos exames utilizados pela IA.
 -- ===========================================================
 
 CREATE TABLE exame (
@@ -105,9 +105,6 @@ CREATE TABLE exame (
 
 -- ===========================================================
 -- TABELA: LAUDO
--- Armazena o resultado relacionado a um exame.
--- As notas clínicas padrão NÃO são armazenadas,
--- pois são texto fixo da aplicação.
 -- ===========================================================
 
 CREATE TABLE laudo (
@@ -124,19 +121,19 @@ CREATE TABLE laudo (
 );
 
 -- ===========================================================
--- USUÁRIO INICIAL
--- Primeiro usuário com acesso de RH.
+-- USUÁRIO INICIAL (RH)
+-- Login: admin / 123
 -- ===========================================================
 
 INSERT INTO funcionario (
-    rm,
+    usuario,
     nome,
     crm,
     senha,
     cargo
 )
 VALUES (
-    1,
+    'admin',
     'Administrador',
     '000000',
     '123',
@@ -145,18 +142,18 @@ VALUES (
 
 -- ===========================================================
 -- USUÁRIO MÉDICO PARA TESTES
--- Pode ser removido na versão final.
+-- Login: joao.silva / 123
 -- ===========================================================
 
 INSERT INTO funcionario (
-    rm,
+    usuario,
     nome,
     crm,
     senha,
     cargo
 )
 VALUES (
-    2,
+    'joao.silva',
     'Dr. João Silva',
     '123456',
     '123',

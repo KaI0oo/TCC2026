@@ -38,10 +38,10 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- RM -->
+            <!-- Usuário (login) -->
             <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,12">
-                <TextBlock Text="RM" Style="{StaticResource PoFormLabel}"/>
-                <TextBox x:Name="txtRM" Style="{StaticResource PoTextBox}"/>
+                <TextBlock Text="Usuário" Style="{StaticResource PoFormLabel}"/>
+                <TextBox x:Name="txtUsuario" Style="{StaticResource PoTextBox}"/>
             </StackPanel>
 
             <!-- Nome -->

@@ -14,7 +14,7 @@ namespace INTERFACE_POSTRATA.RhUserControls
 
         private void Cancelar_Click(object sender, RoutedEventArgs e)
         {
-            txtTargetRM.Text = string.Empty;
+            txtTargetUsuario.Text = string.Empty;
             txtTargetNome.Text = string.Empty;
             txtCurrentRHPassword.Password = string.Empty;
         }
@@ -23,9 +23,10 @@ namespace INTERFACE_POSTRATA.RhUserControls
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(txtTargetRM.Text) || !int.TryParse(txtTargetRM.Text.Trim(), out int targetRm))
+                string targetUsuario = txtTargetUsuario.Text?.Trim();
+                if (string.IsNullOrWhiteSpace(targetUsuario))
                 {
-                    MessageBox.Show("RM inválido.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Informe o usuário do funcionário.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -71,9 +72,10 @@ namespace INTERFACE_POSTRATA.RhUserControls
                         }
                     }
 
-                    using (var cmd2 = new MySqlCommand("SELECT rm, cargo FROM funcionario WHERE rm = @rm", conn))
+                    int targetRm;
+                    using (var cmd2 = new MySqlCommand("SELECT rm, cargo FROM funcionario WHERE usuario = @usuario", conn))
                     {
-                        cmd2.Parameters.AddWithValue("@rm", targetRm);
+                        cmd2.Parameters.AddWithValue("@usuario", targetUsuario);
                         using (var r2 = cmd2.ExecuteReader())
                         {
                             if (!r2.Read())
@@ -81,10 +83,11 @@ namespace INTERFACE_POSTRATA.RhUserControls
                                 MessageBox.Show("Funcionário informado não existe.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
                                 return;
                             }
+                            targetRm = Convert.ToInt32(r2["rm"]);
                         }
                     }
 
-                    var confirm = MessageBox.Show($"Confirma alterar o RH principal atual (RM {currentRm}) para MÉDICO e definir RM {targetRm} como novo RH?\nApenas um RH Principal poderá existir.", "Confirmar alteração", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    var confirm = MessageBox.Show($"Confirma alterar o RH principal atual para MÉDICO e definir o usuário '{targetUsuario}' como novo RH?\nApenas um RH Principal poderá existir.", "Confirmar alteração", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                     if (confirm != MessageBoxResult.Yes) return;
 
                     using (var tran = conn.BeginTransaction())

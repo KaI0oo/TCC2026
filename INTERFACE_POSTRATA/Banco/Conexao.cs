@@ -19,7 +19,7 @@ namespace INTERFACE_POSTRATA.Banco
         {
             // Tenta carregar a string de conexão da configuração; se não existir, usa valor padrão
             string conexao = LoadConnectionStringFromConfig() ??
-                             "server=localhost;database=Postrata;user=root;password=;";
+                             "server=localhost;database=postrata;user=root;password=;";
 
             // Constrói o connection string de forma segura e garante opções desejadas
             var builder = new MySqlConnectionStringBuilder(conexao)

@@ -26,12 +26,12 @@ namespace INTERFACE_POSTRATA
                 var lista = new List<dynamic>();
                 using (var conn = Conexao.ObterConexao())
                 {
-                    string sql = "SELECT rm, nome, crm, cargo FROM funcionario";
+                    string sql = "SELECT rm, usuario, nome, crm, cargo FROM funcionario";
                     if (!string.IsNullOrWhiteSpace(filtro))
                     {
-                        sql += " WHERE rm LIKE @q OR nome LIKE @q";
+                        sql += " WHERE usuario LIKE @q OR nome LIKE @q";
                     }
-                    sql += " ORDER BY rm";
+                    sql += " ORDER BY usuario";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -45,6 +45,7 @@ namespace INTERFACE_POSTRATA
                                 lista.Add(new
                                 {
                                     RM = reader["rm"] != DBNull.Value ? Convert.ToInt32(reader["rm"]) : 0,
+                                    Usuario = reader["usuario"]?.ToString() ?? string.Empty,
                                     Nome = reader["nome"]?.ToString() ?? string.Empty,
                                     CRM = reader["crm"]?.ToString() ?? string.Empty,
                                     Cargo = reader["cargo"]?.ToString() ?? string.Empty
@@ -84,6 +85,7 @@ namespace INTERFACE_POSTRATA
             }
 
             var rmProp = item.GetType().GetProperty("RM");
+            var usuarioProp = item.GetType().GetProperty("Usuario");
             var nomeProp = item.GetType().GetProperty("Nome");
             var crmProp = item.GetType().GetProperty("CRM");
             var cargoProp = item.GetType().GetProperty("Cargo");
@@ -92,7 +94,7 @@ namespace INTERFACE_POSTRATA
 
             int rm = (int)rmProp.GetValue(item);
             _selectedRm = rm;
-            txtRM.Text = rm.ToString();
+            txtUsuario.Text = usuarioProp?.GetValue(item)?.ToString() ?? string.Empty;
             txtNome.Text = nomeProp?.GetValue(item)?.ToString() ?? string.Empty;
             txtCRM.Text = crmProp?.GetValue(item)?.ToString() ?? string.Empty;
             var cargoVal = cargoProp?.GetValue(item)?.ToString() ?? string.Empty;
@@ -116,7 +118,7 @@ namespace INTERFACE_POSTRATA
 
         private void SetPanelEnabled(bool enabled)
         {
-            txtRM.IsEnabled = false;
+            txtUsuario.IsEnabled = enabled;
             txtNome.IsEnabled = enabled;
             txtCRM.IsEnabled = enabled;
             cbCargo.IsEnabled = enabled;
@@ -129,7 +131,7 @@ namespace INTERFACE_POSTRATA
         {
             _selectedRm = null;
             dgUsers.SelectedItem = null;
-            txtRM.Text = string.Empty;
+            txtUsuario.Text = string.Empty;
             txtNome.Text = string.Empty;
             txtCRM.Text = string.Empty;
             cbCargo.SelectedIndex = -1;
@@ -144,6 +146,12 @@ namespace INTERFACE_POSTRATA
             if (!_selectedRm.HasValue)
             {
                 MessageBox.Show("Selecione um funcionário para salvar.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtUsuario.Text))
+            {
+                MessageBox.Show("Usuário é obrigatório.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return false;
             }
 
@@ -197,10 +205,11 @@ namespace INTERFACE_POSTRATA
                         }
                     }
 
-                    string sql = "UPDATE funcionario SET nome=@nome, crm=@crm, cargo=@cargo WHERE rm=@rm";
+                    string sql = "UPDATE funcionario SET usuario=@usuario, nome=@nome, crm=@crm, cargo=@cargo WHERE rm=@rm";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
+                        cmd.Parameters.AddWithValue("@usuario", txtUsuario.Text.Trim());
                         cmd.Parameters.AddWithValue("@nome", txtNome.Text.Trim());
                         cmd.Parameters.AddWithValue("@crm", txtCRM.Text.Trim());
                         cmd.Parameters.AddWithValue("@cargo", novoCargo);
@@ -291,7 +300,7 @@ namespace INTERFACE_POSTRATA
             }
 
             int rm = _selectedRm.Value;
-            var result = MessageBox.Show($"Deseja realmente excluir o usuário com RM {rm}?", "Confirmar exclusão", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var result = MessageBox.Show($"Deseja realmente excluir o usuário {txtUsuario.Text}?", "Confirmar exclusão", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result != MessageBoxResult.Yes) return;
 
             try

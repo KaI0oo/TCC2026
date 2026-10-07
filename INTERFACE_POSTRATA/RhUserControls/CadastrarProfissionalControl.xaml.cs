@@ -32,7 +32,7 @@ namespace INTERFACE_POSTRATA.RhUserControls
         {
             try
             {
-                string rm = txtRM.Text?.Trim();
+                string usuario = txtUsuario.Text?.Trim();
                 string nome = txtNome.Text?.Trim();
                 string senha = txtSenha.Password?.Trim();
                 string cargo = ((ComboBoxItem)cbCargo.SelectedItem)?.Content?.ToString();
@@ -40,7 +40,7 @@ namespace INTERFACE_POSTRATA.RhUserControls
                     ? (txtCRM.Text?.Trim() ?? string.Empty)
                     : null;
 
-                if (string.IsNullOrEmpty(rm) || string.IsNullOrEmpty(nome) || string.IsNullOrEmpty(senha) || string.IsNullOrEmpty(cargo))
+                if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(nome) || string.IsNullOrEmpty(senha) || string.IsNullOrEmpty(cargo))
                 {
                     lblStatus.Foreground = System.Windows.Media.Brushes.Red;
                     lblStatus.Text = "Todos os campos são obrigatórios.";
@@ -56,10 +56,10 @@ namespace INTERFACE_POSTRATA.RhUserControls
 
                 using (var conn = Banco.Conexao.ObterConexao())
                 {
-                    string sql = @"INSERT INTO funcionario (rm, nome, crm, senha, cargo) VALUES (@rm, @nome, @crm, @senha, @cargo)";
+                    string sql = @"INSERT INTO funcionario (usuario, nome, crm, senha, cargo) VALUES (@usuario, @nome, @crm, @senha, @cargo)";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
-                        cmd.Parameters.AddWithValue("@rm", rm);
+                        cmd.Parameters.AddWithValue("@usuario", usuario);
                         cmd.Parameters.AddWithValue("@nome", nome);
                         cmd.Parameters.AddWithValue("@crm", (object)crm ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@senha", senha);
@@ -87,7 +87,7 @@ namespace INTERFACE_POSTRATA.RhUserControls
 
         private void LimparCampos()
         {
-            txtRM.Clear();
+            txtUsuario.Clear();
             txtNome.Clear();
             txtCRM.Clear();
             txtSenha.Clear();
