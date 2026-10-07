@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "N3/hymTyNDE=",
+  "dgSpecHash": "rUSUn/m+1sQ=",
   "success": true,
-  "projectFilePath": "C:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
+  "projectFilePath": "C:\\Users\\kaioc\\Downloads\\TCC2026-main (2)\\TCC2026-main\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\kaioc\\.nuget\\packages\\bouncycastle.cryptography\\2.6.2\\bouncycastle.cryptography.2.6.2.nupkg.sha512",
     "C:\\Users\\kaioc\\.nuget\\packages\\google.protobuf\\3.32.0\\google.protobuf.3.32.0.nupkg.sha512",

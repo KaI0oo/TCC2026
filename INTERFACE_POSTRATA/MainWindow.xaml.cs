@@ -29,29 +29,25 @@ namespace INTERFACE_POSTRATA
 
                 if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(senha))
                 {
-                    lblLoginError.Text = "Usuário e senha são obrigatórios.";
+                    lblLoginError.Text = "RM e senha são obrigatórios.";
                     lblLoginError.Visibility = System.Windows.Visibility.Visible;
                     return;
                 }
 
-                // Autenticação real contra tabela funcionario
+                // Autenticação real contra tabela funcionario (login por RM)
                 using (var conn = INTERFACE_POSTRATA.Banco.Conexao.ObterConexao())
                 {
-                // incluir crm para propagar na sessão
-<<<<<<< HEAD
-                string sql = @"SELECT rm, nome, cargo, crm FROM funcionario WHERE rm = @rm AND senha = @senha";
-=======
-                string sql = @"SELECT rm, nome, cargo, crm FROM medico WHERE nome = @nome AND senha = @senha";
->>>>>>> origin/main
+                    // incluir crm para propagar na sessão
+                    string sql = @"SELECT rm, nome, cargo, crm FROM funcionario WHERE rm = @rm AND senha = @senha";
                     using (var cmd = new MySql.Data.MySqlClient.MySqlCommand(sql, conn))
                     {
-                        cmd.Parameters.AddWithValue("@nome", usuario);
+                        cmd.Parameters.AddWithValue("@rm", usuario);
                         cmd.Parameters.AddWithValue("@senha", senha);
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (!reader.Read())
                             {
-                                lblLoginError.Text = "Usuário ou senha inválidos.";
+                                lblLoginError.Text = "RM ou senha inválidos.";
                                 lblLoginError.Visibility = System.Windows.Visibility.Visible;
                                 return;
                             }
@@ -78,8 +74,7 @@ namespace INTERFACE_POSTRATA
                                 var tela = new Window1();
                                 tela.Show();
                             }
-                            else if (cargo.Equals("SECRETARIA", System.StringComparison.OrdinalIgnoreCase)
-                                || cargo.Equals("Secretaria", System.StringComparison.OrdinalIgnoreCase))
+                            else if (cargo.Equals("Secretaria", System.StringComparison.OrdinalIgnoreCase))
                             {
                                 var tela = new TelaSecretaria();
                                 tela.Show();
@@ -99,6 +94,7 @@ namespace INTERFACE_POSTRATA
             {
                 lblLoginError.Text = "Erro ao tentar realizar login: " + ex.Message;
                 lblLoginError.Visibility = System.Windows.Visibility.Visible;
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
             }
         }
 

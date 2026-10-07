@@ -410,11 +410,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
+      "projectUniqueName": "C:\\Users\\kaioc\\Downloads\\TCC2026-main (2)\\TCC2026-main\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
       "projectName": "INTERFACE_POSTRATA",
-      "projectPath": "C:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
+      "projectPath": "C:\\Users\\kaioc\\Downloads\\TCC2026-main (2)\\TCC2026-main\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA.csproj",
       "packagesPath": "C:\\Users\\kaioc\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\kaioc\\source\\repos\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\INTERFACE_POSTRATA\\obj\\",
+      "outputPath": "C:\\Users\\kaioc\\Downloads\\TCC2026-main (2)\\TCC2026-main\\INTERFACE_POSTRATA\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
