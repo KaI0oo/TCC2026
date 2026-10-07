@@ -1,0 +1,6 @@
+# Dependências usadas pela IA e pelo empacotamento do executável Windows.
+pandas
+# IA.joblib foi serializado com scikit-learn 1.8.0; mantenha a versão compatível.
+scikit-learn==1.8.0
+joblib
+pyinstaller

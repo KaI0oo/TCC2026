@@ -1,4 +1,4 @@
-﻿<Window x:Class="INTERFACE_POSTRATA.Window1"
+<Window x:Class="INTERFACE_POSTRATA.Window1"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -129,13 +129,14 @@
                             <TreeViewItem Header="Excluir Laudo" Selected="ExcluirLaudo_Click"/>
                         </TreeViewItem>
 
-                        <!-- Inteligência Artificial -->
+                        <!-- Inteligência Artificial 
                         <TreeViewItem x:Name="tvIAGroup" IsExpanded="True">
                             <TreeViewItem.Header>
                                 <TextBlock Text="Inteligência Artificial" FontWeight="Bold" />
                             </TreeViewItem.Header>
                             <TreeViewItem Header="Treinar IA" Selected="TreinarIA_Click"/>
                         </TreeViewItem>
+                        -->
 
                         <!-- CONTA -->
                         <TreeViewItem x:Name="tvContaGroup" IsExpanded="True">
@@ -191,3 +192,6 @@
         </Grid>
     </Grid>
 </Window>
+
+
+

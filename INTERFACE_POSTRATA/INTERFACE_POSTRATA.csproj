@@ -19,6 +19,15 @@
     <PackageReference Include="MySql.Data" Version="9.7.0" />
   </ItemGroup>
 
+  <!-- O executável Python é gerado por IA/build.ps1 antes de compilar/publicar a interface. -->
+  <ItemGroup Condition="Exists('..\IA\dist\executar_ia.exe')">
+    <Content Include="..\IA\dist\executar_ia.exe">
+      <Link>IA\executar_ia.exe</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
   <!-- appsettings.json não é obrigatório; a classe Conexao faz fallback para valores padrão se não existir -->
 
 </Project>

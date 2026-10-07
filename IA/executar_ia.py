@@ -4,9 +4,11 @@ from pathlib import Path
 import IA_generator as ia 
 
 # 1. Gerenciamento de Caminhos Relativos Seguros
-pasta_atual = Path(__file__).resolve().parent if '__file__' in globals() else Path.cwd()
-caminho_modelo = pasta_atual / "IA.joblib"
-caminho_dados = pasta_atual / "dados_psa_clinica.csv" 
+# Em execução empacotada, recursos incluídos pelo PyInstaller ficam em _MEIPASS.
+# O executável usa os dados empacotados sem depender da pasta atual do usuário.
+pasta_recursos = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+caminho_modelo = pasta_recursos / "IA.joblib"
+caminho_dados = pasta_recursos / "dados_psa_clinica.csv"
 
 # 2. Verifica se o modelo já existe
 if not caminho_modelo.exists():

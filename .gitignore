@@ -8,3 +8,9 @@ obj/
 *.suo
 *.ipynb
 *.png
+
+# Artefatos locais do empacotamento PyInstaller
+IA/build/
+IA/dist/
+IA/__pycache__/
+IA/*.spec

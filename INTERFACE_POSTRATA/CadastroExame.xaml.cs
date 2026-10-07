@@ -369,20 +369,11 @@ namespace INTERFACE_POSTRATA
                     return;
                 }
 
-                string? caminhoScriptIA = EncontrarScriptIA();
-                if (string.IsNullOrEmpty(caminhoScriptIA))
+                string? executavelIA = EncontrarExecutavelIA();
+                if (string.IsNullOrEmpty(executavelIA))
                 {
                     Services.DialogService.Error(
-                        "Arquivo IA/executar_ia.py não encontrado.\n\n" +
-                        "Verifique se a pasta IA existe na raiz do repositório com executar_ia.py, IA_generator.py, dados_psa_clinica.csv e IA.joblib.");
-                    return;
-                }
-
-                // Encontrar Python instalado
-                string pythonExe = EncontrarPython();
-                if (string.IsNullOrEmpty(pythonExe))
-                {
-                    Services.DialogService.Error("Python não foi encontrado no sistema. Certifique-se de tê-lo instalado.");
+                        "Executável da IA não encontrado. Recompile o aplicativo após gerar IA\\dist\\executar_ia.exe com o script IA\\build.ps1.");
                     return;
                 }
 
@@ -397,16 +388,21 @@ namespace INTERFACE_POSTRATA
                 System.Diagnostics.Debug.WriteLine(debugMsg);
 
                 // Configurar processo
-                ProcessStartInfo psi = new ProcessStartInfo();
-                psi.FileName = pythonExe;
-                psi.Arguments = $"\"{caminhoScriptIA}\" {idade} {psaTotal} {psaLivre} {densidade}";
-                psi.RedirectStandardOutput = true;
-                psi.RedirectStandardError = true;
-                psi.UseShellExecute = false;
-                psi.CreateNoWindow = true;
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = executavelIA,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+                psi.ArgumentList.Add(idade);
+                psi.ArgumentList.Add(psaTotal);
+                psi.ArgumentList.Add(psaLivre);
+                psi.ArgumentList.Add(densidade);
 
                 // Debug: Exibir comando sendo executado
-                System.Diagnostics.Debug.WriteLine($"Comando: {pythonExe} {psi.Arguments}");
+                System.Diagnostics.Debug.WriteLine($"Executável IA: {executavelIA}");
 
                 // Executar IA
                 Process processo = Process.Start(psi);
@@ -514,78 +510,22 @@ namespace INTERFACE_POSTRATA
             }
         }
 
-        private static string? EncontrarScriptIA()
+        private static string? EncontrarExecutavelIA()
         {
             string dirExecavel = AppDomain.CurrentDomain.BaseDirectory;
-            var caminhosProcurados = new List<string>();
+            string caminho = System.IO.Path.Combine(dirExecavel, "IA", "executar_ia.exe");
+            if (System.IO.File.Exists(caminho)) return caminho;
 
+            // Permite executar pelo diretório raiz do repositório durante desenvolvimento.
             var diretorioAtual = new System.IO.DirectoryInfo(dirExecavel);
             while (diretorioAtual != null)
             {
-                string candidato = System.IO.Path.Combine(diretorioAtual.FullName, "IA", "executar_ia.py");
-                caminhosProcurados.Add(candidato);
-                if (System.IO.File.Exists(candidato))
-                {
-                    return candidato;
-                }
+                caminho = System.IO.Path.Combine(diretorioAtual.FullName, "IA", "dist", "executar_ia.exe");
+                if (System.IO.File.Exists(caminho)) return caminho;
                 diretorioAtual = diretorioAtual.Parent;
             }
 
-            System.Diagnostics.Debug.WriteLine(
-                "IA/executar_ia.py não encontrado. Caminhos verificados:\n" +
-                string.Join("\n", caminhosProcurados));
-
             return null;
-        }
-
-        private string EncontrarPython()
-        {
-            // Procurar Python no PATH
-            string pythonExe = "python";
-
-            try
-            {
-                // Tentar usar 'where python' no Windows
-                ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", "/c where python")
-                {
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                Process p = Process.Start(psi);
-                string resultado = p.StandardOutput.ReadToEnd().Trim();
-
-                if (!string.IsNullOrEmpty(resultado))
-                {
-                    return resultado.Split(new[] { Environment.NewLine }, StringSplitOptions.None)[0];
-                }
-            }
-            catch { }
-
-            // Caminhos comuns onde Python pode estar
-            string[] caminhosPython = new[]
-            {
-                @"C:\Python311\python.exe",
-                @"C:\Python310\python.exe",
-                @"C:\Python312\python.exe",
-                @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python\Python311\python.exe",
-                @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python\Python310\python.exe",
-                @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python\Python312\python.exe",
-                @"C:\Program Files\Python311\python.exe",
-                @"C:\Program Files\Python310\python.exe",
-                @"C:\Program Files\Python312\python.exe"
-            };
-
-            foreach (string caminho in caminhosPython)
-            {
-                if (System.IO.File.Exists(caminho))
-                {
-                    return caminho;
-                }
-            }
-
-            return pythonExe; // retorna "python" como fallback
         }
 
         // Usamos Services.NumberFormatHelper.NormalizarNumero em vez do método local
