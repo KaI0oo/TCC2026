@@ -34,3 +34,4 @@ IA/build/
 IA/dist/
 IA/__pycache__/
 IA/*.spec
+IA/IA.exe

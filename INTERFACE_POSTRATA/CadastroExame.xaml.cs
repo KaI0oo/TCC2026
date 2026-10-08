@@ -435,65 +435,78 @@ namespace INTERFACE_POSTRATA
                     return;
                 }
 
-                string? caminhoScriptIA = EncontrarScriptIA();
-                if (string.IsNullOrEmpty(caminhoScriptIA))
+                // 1. Localizar o executável da IA em caminho relativo
+                string iaExePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "IA", "IA.exe");
+                if (!File.Exists(iaExePath))
                 {
-                    Services.DialogService.Error(
-                        "Arquivo IA/executar_ia.py não encontrado.\n\n" +
-                        "Verifique se a pasta IA existe na raiz do repositório com executar_ia.py, IA_generator.py, dados_psa_clinica.csv e IA.joblib.");
-                    return;
-                }
-
-                string pythonExe = EncontrarPython();
-                if (string.IsNullOrEmpty(pythonExe))
-                {
-                    Services.DialogService.Error(
-                        "Executável da IA não encontrado. Recompile o aplicativo após gerar IA\\dist\\executar_ia.exe com o script IA\\build.ps1.");
+                    Services.DialogService.Error("O motor de IA (IA.exe) não foi encontrado na pasta IA/.");
                     return;
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Dados enviados para a IA: Idade={idade} PSATotal={psaTotal} PSALivre={psaLivre} Densidade={densidade}");
 
                 ProcessStartInfo psi = new ProcessStartInfo();
-                psi.FileName = pythonExe;
-                psi.Arguments = $"\"{caminhoScriptIA}\" {idade} {psaTotal} {psaLivre} {densidade}";
+                psi.FileName = iaExePath;
+                // Ordem dos argumentos: PSA_Total, PSA_Livre, Densidade, Idade
+                psi.Arguments = $"{psaTotal} {psaLivre} {densidade} {idade}";
                 psi.RedirectStandardOutput = true;
                 psi.RedirectStandardError = true;
                 psi.UseShellExecute = false;
                 psi.CreateNoWindow = true;
 
-                System.Diagnostics.Debug.WriteLine($"Comando: {pythonExe} {psi.Arguments}");
+                System.Diagnostics.Debug.WriteLine($"Comando: {iaExePath} {psi.Arguments}");
 
-                Process processo = Process.Start(psi);
-                processo.WaitForExit();
-
-                string saida = processo.StandardOutput.ReadToEnd().Trim();
-                string erro = processo.StandardError.ReadToEnd().Trim();
-
-                System.Diagnostics.Debug.WriteLine($"Saída da IA: {saida}");
-                System.Diagnostics.Debug.WriteLine($"Erro da IA: {erro}");
-
-                string resultadoIA = string.Empty;
-
-                if (!string.IsNullOrEmpty(erro))
+                string resultadoIA = "BENIGNO";
+                try
                 {
-                    Services.DialogService.Error($"Erro ao executar a IA:\n{erro}");
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(saida))
-                {
-                    resultadoIA = saida.ToUpper().Trim();
-                    if (resultadoIA != "SUSPEITO" && resultadoIA != "BENIGNO")
+                    using (Process processo = Process.Start(psi))
                     {
-                        Services.DialogService.Warn($"Resultado inesperado da IA: {resultadoIA}\nUsando valor padrão: BENIGNO");
-                        resultadoIA = "BENIGNO";
+                        if (!processo.WaitForExit(20000)) // Timeout de 20 segundos
+                        {
+                            processo.Kill();
+                            throw new Exception("A execução da IA excedeu o tempo limite (timeout).");
+                        }
+
+                        string saida = processo.StandardOutput.ReadToEnd().Trim();
+                        string erro = processo.StandardError.ReadToEnd().Trim();
+
+                        System.Diagnostics.Debug.WriteLine($"Saída da IA: {saida}");
+                        System.Diagnostics.Debug.WriteLine($"Erro da IA: {erro}");
+
+                        if (string.IsNullOrEmpty(saida))
+                        {
+                            throw new Exception("A IA não retornou nenhum resultado.");
+                        }
+
+                        // Parsing do JSON de resposta
+                        var response = JsonSerializer.Deserialize<IA_Response>(saida);
+                        if (response == null)
+                        {
+                            throw new Exception("Resposta da IA em formato inválido.");
+                        }
+
+                        if (response.status == "error")
+                        {
+                            throw new Exception(response.message ?? "Erro interno na IA.");
+                        }
+
+                        resultadoIA = response.result?.ToUpper() ?? "BENIGNO";
+                        if (resultadoIA != "SUSPEITO" && resultadoIA != "BENIGNO")
+                        {
+                            Services.DialogService.Warn($"Resultado inesperado da IA: {resultadoIA}. Usando valor padrão: BENIGNO");
+                            resultadoIA = "BENIGNO";
+                        }
                     }
                 }
-                else
+                catch (JsonException)
                 {
-                    Services.DialogService.Warn("A IA não retornou um resultado. Usando valor padrão: BENIGNO");
-                    resultadoIA = "BENIGNO";
+                    Services.DialogService.Error("Erro ao processar a resposta da IA (JSON inválido).");
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Services.DialogService.Error($"Erro ao executar a IA:\n{ex.Message}");
+                    return;
                 }
 
                 // Persistir exame + laudo (incluindo NOTAS) no banco.
@@ -682,6 +695,13 @@ namespace INTERFACE_POSTRATA
             INTERFACE_POSTRATA.Helpers.NavigationHelper.ShowMainWindow();
             this.Close();
         }
+    }
+
+    public class IA_Response
+    {
+        public string status { get; set; }
+        public string result { get; set; }
+        public string message { get; set; }
     }
 }
 
